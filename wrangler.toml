@@ -1,0 +1,14 @@
+name = "nikunj-site"
+main = "src/index.ts"
+compatibility_date = "2026-08-10"
+
+[vars]
+ALLOW_REGISTRATION = "true"
+
+[assets]
+directory = "./public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "portfolio-db"
+database_id = "d9e46eaa-6f5f-428c-98e2-b67f4da500ba"
