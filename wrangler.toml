@@ -12,3 +12,18 @@ directory = "./public"
 binding = "DB"
 database_name = "portfolio-db"
 database_id = "d9e46eaa-6f5f-428c-98e2-b67f4da500ba"
+
+[observability]
+enabled = false
+head_sampling_rate = 1
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+persist = true
+invocation_logs = true
+
+[observability.traces]
+enabled = true
+persist = true
+head_sampling_rate = 1
