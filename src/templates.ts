@@ -51,7 +51,7 @@ export function layout(title: string, content: string, description: string = "Po
         <li><a class="nav-link" href="/#portfolio">Projects Done</a></li>
         <li><a class="nav-link" href="/#testimonials">Testimonials</a></li>
         <li><a class="nav-link" href="/#blog">Blog</a></li>
-        <li><a class="nav-link" href="/#contact">Contact</a></li>
+        <li><a class="nav-link" href="/user/login">Contact</a></li>
         ${roleHtml}
       </ul>
     </div>
@@ -267,7 +267,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
           <a href="#about">About</a>
           <a href="#services">Services</a>
           <a href="#portfolio">Projects Done</a>
-          <a href="#contact">Contact</a>
+          <a href="/user/login">Contact</a>
         </div>
       </div>
     </footer>

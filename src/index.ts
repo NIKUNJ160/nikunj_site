@@ -140,6 +140,8 @@ app.get('/sitemap.xml', async (c) => {
   return c.text(sitemapXml.trim());
 });
 
+app.get('/contact', (c) => c.redirect('/user/login'));
+
 app.post('/contact', async (c) => {
   const body = await c.req.parseBody();
   const name = body.name as string;
