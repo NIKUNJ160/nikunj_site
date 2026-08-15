@@ -20,6 +20,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 type Bindings = {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
   JWT_SECRET_KEY?: string;
   ALLOW_REGISTRATION?: string;
 };
@@ -39,6 +40,14 @@ app.use('*', async (c, next) => {
   c.header('X-Content-Type-Options', 'nosniff');
   c.header('X-Frame-Options', 'DENY');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // Swap in service role key if available to bypass database RLS policies securely on server
+  const serviceKey = (c.env as any)?.SUPABASE_SERVICE_ROLE_KEY || (typeof process !== 'undefined' && process.env?.SUPABASE_SERVICE_ROLE_KEY);
+  if (serviceKey) {
+    if (c.env) (c.env as any).SUPABASE_ANON_KEY = serviceKey;
+    if (typeof process !== 'undefined' && process.env) process.env.SUPABASE_ANON_KEY = serviceKey;
+  }
+
   await next();
 });
 
@@ -250,27 +259,21 @@ app.post('/admin/login', async (c) => {
   try {
     const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
     const { data: user } = await supabase.from('users').select('*').eq('email', email).eq('role', 'admin').single();
-    
-    if (!user) {
-      return c.html(loginPage('admin', `Error: User not found in database for email: ${email} and role: admin.`));
+    if (user && await verifyPassword(password, user.password_hash as string)) {
+      const token = await createSession(email, 'admin', getSecret(c.env));
+      setCookie(c, 'admin_session', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'Strict',
+        maxAge: 2 * 60 * 60
+      });
+      return c.redirect('/admin/menu');
     }
-    
-    const verified = await verifyPassword(password, user.password_hash as string);
-    if (!verified) {
-      return c.html(loginPage('admin', `Error: Password verification failed. Database stored hash is: "${user.password_hash}".`));
-    }
-
-    const token = await createSession(email, 'admin', getSecret(c.env));
-    setCookie(c, 'admin_session', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'Strict',
-      maxAge: 2 * 60 * 60
-    });
-    return c.redirect('/admin/menu');
   } catch (err: any) {
-    return c.html(loginPage('admin', `Error: Exception: ${err.message}`));
+    return c.html(loginPage('admin', `Error: ${err.message}`));
   }
+
+  return c.html(loginPage('admin', 'Invalid admin credentials.'));
 });
 
 app.post('/admin/logout', (c) => {
