@@ -34,6 +34,6 @@ CREATE TABLE IF NOT EXISTS site_metadata (
     value TEXT NOT NULL
 );
 
--- Seed default admin account (email: admin@nikunjpateliya.com, password: admin123)
+-- Seed default admin account (email: [EMAIL_ADDRESS], password: admin123)
 INSERT OR IGNORE INTO users (email, password_hash, role)
-VALUES ('admin@nikunjpateliya.com', '037e3b7ee499a27bec84152fa9449844:dc348759dae044aa8ec1525f45dbe3df2b842645a1983ccce15b94e76be92e7d', 'admin');
+VALUES ('[EMAIL_ADDRESS]', '037e3b7ee499a27bec84152fa9449844:dc348759dae044aa8ec1525f45dbe3df2b842645a1983ccce15b94e76be92e7d', 'admin');

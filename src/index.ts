@@ -11,7 +11,8 @@ import {
   homePage, 
   loginPage, 
   registerPage, 
-  adminMenuPage 
+  adminMenuPage,
+  adminDataPage
 } from './templates';
 
 type Bindings = {
@@ -246,6 +247,16 @@ app.get('/admin/menu', adminAuthMiddleware, async (c) => {
     return c.html(adminMenuPage(users.results || [], messages.results || [], []));
   } catch {
     return c.text('Admin menu loading failed. Please run database initializations.');
+  }
+});
+
+app.get('/admin/data', adminAuthMiddleware, async (c) => {
+  try {
+    const blogPosts = await c.env.DB.prepare('SELECT id, title, slug, is_published, created_at FROM blog_posts ORDER BY created_at DESC').all();
+    const metadata = await c.env.DB.prepare('SELECT * FROM site_metadata').all();
+    return c.html(adminDataPage(blogPosts.results || [], metadata.results || []));
+  } catch {
+    return c.text('Admin data loading failed. Please run database initializations.');
   }
 });
 

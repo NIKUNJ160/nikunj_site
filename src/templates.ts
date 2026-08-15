@@ -25,7 +25,7 @@ export function layout(title: string, content: string, description: string = "Po
         <li><a class="nav-link active" href="#home">Home</a></li>
         <li><a class="nav-link" href="#about">About</a></li>
         <li><a class="nav-link" href="#services">Services</a></li>
-        <li><a class="nav-link" href="#portfolio">Portfolio</a></li>
+        <li><a class="nav-link" href="#portfolio">Projects Done</a></li>
         <li><a class="nav-link" href="#testimonials">Testimonials</a></li>
         <li><a class="nav-link" href="#blog">Blog</a></li>
         <li><a class="nav-link" href="#contact">Contact</a></li>
@@ -152,7 +152,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
         </h3>
         <div class="hero-actions">
           <a href="#about" class="btn">Learn More</a>
-          <a href="#portfolio" class="btn-outline">View Portfolio</a>
+          <a href="#portfolio" class="btn-outline">View Projects Done</a>
         </div>
       </div>
     </section>
@@ -188,7 +188,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
     <section id="portfolio" class="section-container" data-scroll-section>
       <div class="section-header">
         <span class="section-tag">GALLERY</span>
-        <h2 class="section-heading">My Portfolio</h2>
+        <h2 class="section-heading">Projects Done</h2>
         <div class="gallery-menu">
           <button class="active filter-btn" data-filter="all">All</button>
           <button class="filter-btn" data-filter="gal_a">Web Development</button>
@@ -244,7 +244,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
           <a href="#home">Home</a>
           <a href="#about">About</a>
           <a href="#services">Services</a>
-          <a href="#portfolio">Portfolio</a>
+          <a href="#portfolio">Projects Done</a>
           <a href="#contact">Contact</a>
         </div>
       </div>
@@ -322,9 +322,12 @@ export function adminMenuPage(users: any[], messages: any[], siteConfig: any[]):
     <div class="admin-dashboard">
       <header class="dashboard-header">
         <h2>Admin Management Portal</h2>
-        <form action="/admin/logout" method="POST">
-          <button type="submit" class="btn-outline">Logout</button>
-        </form>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <a href="/admin/data" class="btn">Data Access</a>
+          <form action="/admin/logout" method="POST">
+            <button type="submit" class="btn-outline">Logout</button>
+          </form>
+        </div>
       </header>
       
       <div class="dashboard-grid">
@@ -354,4 +357,71 @@ export function adminMenuPage(users: any[], messages: any[], siteConfig: any[]):
     </div>
   `;
   return layout("Admin Menu", content);
+}
+
+export function adminDataPage(blogPosts: any[], siteConfig: any[]): string {
+  const blogsHtml = blogPosts.map(p => `
+    <tr>
+      <td>${p.title}</td>
+      <td>${p.slug}</td>
+      <td><span class="role-badge ${p.is_published ? 'role-admin' : 'role-user'}">${p.is_published ? 'Published' : 'Draft (Project)'}</span></td>
+      <td>${new Date(p.created_at).toLocaleDateString()}</td>
+    </tr>
+  `).join('');
+
+  const configHtml = siteConfig.map(c => `
+    <tr>
+      <td><code>${c.key}</code></td>
+      <td>${c.value}</td>
+    </tr>
+  `).join('');
+
+  const content = `
+    <div class="admin-dashboard">
+      <header class="dashboard-header">
+        <h2>Admin Data Access</h2>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <a href="/admin/menu" class="btn-outline">Back to Dashboard</a>
+          <form action="/admin/logout" method="POST">
+            <button type="submit" class="btn-outline">Logout</button>
+          </form>
+        </div>
+      </header>
+      
+      <div class="dashboard-grid">
+        <section class="dashboard-col glass" style="flex: 2;">
+          <h3>Content (Projects & Blog Posts)</h3>
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Slug</th>
+                <th>Status</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${blogsHtml.length ? blogsHtml : '<tr><td colspan="4" class="text-center text-secondary">No content entries found.</td></tr>'}
+            </tbody>
+          </table>
+        </section>
+
+        <section class="dashboard-col glass" style="flex: 1;">
+          <h3>Site Metadata</h3>
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${configHtml.length ? configHtml : '<tr><td colspan="2" class="text-center text-secondary">No metadata found.</td></tr>'}
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+  `;
+  return layout("Data Access", content);
 }
