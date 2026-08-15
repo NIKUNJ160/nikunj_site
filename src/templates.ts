@@ -16,6 +16,10 @@ export function layout(title: string, content: string, description: string = "Po
       document.documentElement.className = savedTheme + '-theme';
     })();
   </script>
+  <script>
+    window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
 <body id="page-top">
   <nav class="navbar" id="mainNav">
