@@ -14,9 +14,11 @@ import {
   adminMenuPage,
   adminDataPage
 } from './templates';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 type Bindings = {
-  DB: D1Database;
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
   JWT_SECRET_KEY?: string;
   ALLOW_REGISTRATION?: string;
 };
@@ -35,20 +37,20 @@ app.use('*', async (c, next) => {
 });
 
 // Helper: check if tables are ready, return safe fallbacks if empty
-async function fetchPortfolioData(db: D1Database) {
+async function fetchPortfolioData(supabase: SupabaseClient) {
   try {
-    const projects = await db.prepare('SELECT * FROM blog_posts WHERE is_published = 0').all();
-    const blogPosts = await db.prepare('SELECT * FROM blog_posts WHERE is_published = 1').all();
+    const { data: projects } = await supabase.from('blog_posts').select('*').eq('is_published', 0);
+    const { data: blogPosts } = await supabase.from('blog_posts').select('*').eq('is_published', 1);
     const skills = [
       { name: 'TypeScript' }, { name: 'JavaScript' }, { name: 'HTML/CSS' },
-      { name: 'Hono' }, { name: 'Cloudflare Workers' }, { name: 'SQLite/D1' }
+      { name: 'Hono' }, { name: 'Cloudflare Workers' }, { name: 'Supabase/PostgreSQL' }
     ];
     const services = [
       { title: 'Web Design', description: 'Clean, dual-theme layouts using modern glassmorphic principles.' },
       { title: 'Full-Stack Development', description: 'Edge-rendered Cloudflare Workers apps running with serverless databases.' },
       { title: 'SEO & Strategy', description: 'Optimized page speeds, semantic tags, and dynamic sitemaps.' }
     ];
-    return { projects: projects.results || [], skills, services, blogPosts: blogPosts.results || [] };
+    return { projects: projects || [], skills, services, blogPosts: blogPosts || [] };
   } catch {
     // If DB has not been initialized yet, return empty structures
     return { projects: [], skills: [], services: [], blogPosts: [] };
@@ -58,12 +60,14 @@ async function fetchPortfolioData(db: D1Database) {
 /* --- Public / General Routes --- */
 
 app.get('/', async (c) => {
-  const data = await fetchPortfolioData(c.env.DB);
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+  const data = await fetchPortfolioData(supabase);
   return c.html(homePage(data));
 });
 
 app.get('/api/portfolio-data', async (c) => {
-  const data = await fetchPortfolioData(c.env.DB);
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+  const data = await fetchPortfolioData(supabase);
   return c.json(data);
 });
 
@@ -71,8 +75,9 @@ app.get('/api/portfolio-data', async (c) => {
 app.get('/sitemap.xml', async (c) => {
   let blogs: any[] = [];
   try {
-    const res = await c.env.DB.prepare('SELECT slug, updated_at FROM blog_posts WHERE is_published = 1').all();
-    blogs = res.results || [];
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const { data } = await supabase.from('blog_posts').select('slug, updated_at').eq('is_published', 1);
+    blogs = data || [];
   } catch {}
 
   const host = c.req.header('host') || 'nikunjpateliya.com';
@@ -115,9 +120,12 @@ app.post('/contact', async (c) => {
   const message = body.message as string;
 
   try {
-    await c.env.DB.prepare(
-      'INSERT INTO messages (subject, body, status) VALUES (?, ?, ?)'
-    ).bind(`Contact from ${name}`, `${message} (Reply to: ${email})`, 'new').run();
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    await supabase.from('messages').insert({
+      subject: `Contact from ${name}`,
+      body: `${message} (Reply to: ${email})`,
+      status: 'new'
+    });
   } catch {}
 
   return c.text('Thank you! Your message has been sent successfully. Go back to Home.');
@@ -135,7 +143,8 @@ app.post('/user/login', async (c) => {
   const password = body.password as string;
 
   try {
-    const user = await c.env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const { data: user } = await supabase.from('users').select('*').eq('email', email).single();
     if (user && await verifyPassword(password, user.password_hash as string)) {
       const token = await createSession(email, user.role as 'admin' | 'user', getSecret(c.env));
       setCookie(c, 'user_session', token, {
@@ -169,9 +178,13 @@ app.post('/user/register', async (c) => {
 
   try {
     const hashed = await hashPassword(password);
-    await c.env.DB.prepare(
-      'INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)'
-    ).bind(email, hashed, 'user').run();
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('users').insert({
+      email,
+      password_hash: hashed,
+      role: 'user'
+    });
+    if (error) throw new Error(error.message);
 
     const token = await createSession(email, 'user', getSecret(c.env));
     setCookie(c, 'user_session', token, {
@@ -204,7 +217,8 @@ app.post('/admin/login', async (c) => {
   const password = body.password as string;
 
   try {
-    const user = await c.env.DB.prepare('SELECT * FROM users WHERE email = ? AND role = "admin"').bind(email).first();
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const { data: user } = await supabase.from('users').select('*').eq('email', email).eq('role', 'admin').single();
     if (user && await verifyPassword(password, user.password_hash as string)) {
       const token = await createSession(email, 'admin', getSecret(c.env));
       setCookie(c, 'admin_session', token, {
@@ -242,9 +256,10 @@ const adminAuthMiddleware = async (c: any, next: any) => {
 
 app.get('/admin/menu', adminAuthMiddleware, async (c) => {
   try {
-    const users = await c.env.DB.prepare('SELECT id, email, role FROM users').all();
-    const messages = await c.env.DB.prepare('SELECT * FROM messages ORDER BY created_at DESC').all();
-    return c.html(adminMenuPage(users.results || [], messages.results || [], []));
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const { data: users } = await supabase.from('users').select('id, email, role');
+    const { data: messages } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
+    return c.html(adminMenuPage(users || [], messages || [], []));
   } catch {
     return c.text('Admin menu loading failed. Please run database initializations.');
   }
@@ -252,9 +267,10 @@ app.get('/admin/menu', adminAuthMiddleware, async (c) => {
 
 app.get('/admin/data', adminAuthMiddleware, async (c) => {
   try {
-    const blogPosts = await c.env.DB.prepare('SELECT id, title, slug, is_published, created_at FROM blog_posts ORDER BY created_at DESC').all();
-    const metadata = await c.env.DB.prepare('SELECT * FROM site_metadata').all();
-    return c.html(adminDataPage(blogPosts.results || [], metadata.results || []));
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const { data: blogPosts } = await supabase.from('blog_posts').select('id, title, slug, is_published, created_at').order('created_at', { ascending: false });
+    const { data: metadata } = await supabase.from('site_metadata').select('*');
+    return c.html(adminDataPage(blogPosts || [], metadata || []));
   } catch {
     return c.text('Admin data loading failed. Please run database initializations.');
   }
@@ -264,7 +280,8 @@ app.post('/admin/menu/users/delete', adminAuthMiddleware, async (c) => {
   const body = await c.req.parseBody();
   const id = body.id as string;
   try {
-    await c.env.DB.prepare('DELETE FROM users WHERE id = ? AND role != "admin"').bind(id).run();
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    await supabase.from('users').delete().eq('id', id).neq('role', 'admin');
   } catch {}
   return c.redirect('/admin/menu');
 });

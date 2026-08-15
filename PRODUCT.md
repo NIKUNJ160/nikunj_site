@@ -38,11 +38,11 @@ The admin workflow exposes:
 - Message review and deletion.
 - Blog post authoring, publishing, editing, and deletion.
 
-The current codebase runs as a Cloudflare Worker using Hono, TypeScript, static assets, and Cloudflare D1.
+The current codebase runs as a Cloudflare Worker using Hono, TypeScript, static assets, and Supabase PostgreSQL.
 
 ## Capabilities and Constraints
 
-- Portfolio data is stored in D1 tables for `users`, `projects`, `messages`, `skills`, `services`, and `blog_posts`.
+- Portfolio data is stored in Supabase PostgreSQL tables for `users`, `projects`, `messages`, `skills`, `services`, and `blog_posts`.
 - Public portfolio data is loaded from `/api/portfolio-data`.
 - Contact submissions are rate-limited and persisted in `messages`.
 - Admin routes are protected by authentication middleware.

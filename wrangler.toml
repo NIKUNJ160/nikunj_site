@@ -4,14 +4,11 @@ compatibility_date = "2026-08-10"
 
 [vars]
 ALLOW_REGISTRATION = "true"
+SUPABASE_URL = "your-supabase-url"
+SUPABASE_ANON_KEY = "your-supabase-anon-key"
 
 [assets]
 directory = "./public"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "portfolio-db"
-database_id = "d9e46eaa-6f5f-428c-98e2-b67f4da500ba"
 
 [observability]
 enabled = false

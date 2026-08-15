@@ -11,11 +11,11 @@
 ┌─────────────────────────────────────────────────────┐
 │                    Cloudflare Edge                    │
 │                                                       │
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────┐ │
-│  │  Workers KV   │   │  Hono Router │   │  D1 DB   │ │
-│  │  (rate limit  │◄──│  (index.ts)  │──►│ (SQLite) │ │
-│  │   planned)    │   │              │   │          │ │
-│  └──────────────┘   └──────┬───────┘   └──────────┘ │
+│  ┌──────────────┐   ┌──────────────┐                  │
+│  │  Workers KV   │   │  Hono Router │   Supabase DB    │
+│  │  (rate limit  │◄──│  (index.ts)  │──► (PostgreSQL) │
+│  │   planned)    │   │              │                  │
+│  └──────────────┘   └──────┬───────┘                  │
 │                             │                         │
 │                      ┌──────┴───────┐                │
 │                      │ Static Assets│                │
@@ -30,7 +30,7 @@
 
 **Runtime:** Cloudflare Workers (V8 isolates — no Node.js, no container)
 **Rendering:** Server-rendered HTML templates (no React/Vue/Svelte) + client-side hydration via vanilla JS `fetch('/api/portfolio-data')`
-**Database:** Cloudflare D1 (serverless SQLite at the edge)
+**Database:** Supabase (PostgreSQL via `@supabase/supabase-js`)
 
 ---
 
@@ -41,8 +41,9 @@
 | Package | Version | Purpose |
 |---|---|---|
 | `hono` | `^4.13.1` | Lightweight edge-first web framework — routing, middleware, context |
+| `@supabase/supabase-js` | `^2.x.x` | Supabase JS client for database interactions |
 
-> **Total production dependencies: 1.** Zero bloat.
+> **Total production dependencies: 2.** Minimal footprint.
 
 ### Dev Dependencies
 
@@ -50,7 +51,7 @@
 |---|---|---|
 | `@cloudflare/workers-types` | `^5.20260810.1` | TypeScript type definitions for Workers runtime APIs |
 | `typescript` | `^5.9.3` | TypeScript compiler for type checking |
-| `wrangler` | `^4.120.0` | Cloudflare CLI — local dev, D1 management, deployment |
+| `wrangler` | `^4.120.0` | Cloudflare CLI — local dev, deployment |
 
 ---
 
@@ -74,12 +75,12 @@ public/
 ├── instagram.svg        # Social icon
 └── linkedin.svg         # Social icon
 
-schema.sql               # D1 database schema (6 tables)
+schema.sql               # Supabase PostgreSQL schema (6 tables)
 wrangler.toml             # Cloudflare deployment config (prod + staging)
 tsconfig.json             # TypeScript strict config
 ```
 
-## 4. Database Schema (D1 / SQLite)
+## 4. Database Schema (Supabase / PostgreSQL)
 
 ### Tables
 
@@ -132,12 +133,11 @@ CREATE TABLE site_metadata (
 );
 ```
 
-### D1 Databases
+### Supabase Projects
 
-| Environment | Database Name | Database ID |
-| --- | --- | --- |
-| Production | `portfolio-db` | `d9e46eaa-6f5f-428c-98e2-b67f4da500ba` |
-| Staging | `portfolio-db-staging` | `6bef5707-9471-4ceb-803a-8203ca3a0831` |
+| Environment | Purpose |
+| --- | --- |
+| Production | Primary PostgreSQL instance on Supabase |
 
 ## 5. Authentication & Security
 
@@ -179,6 +179,8 @@ Content-Security-Policy: default-src 'self'; script-src 'self'; ...
 |---|---|---|
 | `JWT_SECRET_KEY` | `wrangler secret put` | Must be set — app returns 500 if missing |
 | `INVITE_CODE` | `wrangler secret put` | Required for registration |
+| `SUPABASE_URL` | `wrangler.toml` [vars] | Required for Supabase |
+| `SUPABASE_ANON_KEY` | `wrangler.toml` [vars] | Required for Supabase |
 | `ALLOW_REGISTRATION` | `wrangler.toml` [vars] | `"false"` in prod, `"true"` in staging |
 
 ---
@@ -236,7 +238,7 @@ push to main
 └──────────┬───────────┘
            ↓
 ┌──────────────────────┐
-│   migrate (Job 2)    │  wrangler d1 execute portfolio-db --remote --file=schema.sql
+│   migrate (Job 2)    │  (Manual or automated migrations via Supabase CLI)
 └──────────┬───────────┘
            ↓
 ┌──────────────────────┐
@@ -262,8 +264,8 @@ push to main
 | `dev` | `wrangler dev` | Local development server |
 | `build` | `npm run typecheck` | Type-check only (no emit) |
 | `deploy` | `wrangler deploy` | Manual deploy to production |
-| `db:init` | `wrangler d1 execute ... --local` | Apply schema to local D1 |
-| `db:deploy` | `wrangler d1 execute ... --remote` | Apply schema to production D1 |
+| `db:init` | `n/a` | (Manage via Supabase UI / CLI) |
+| `db:deploy` | `n/a` | (Manage via Supabase UI / CLI) |
 | `typecheck` | `tsc --noEmit` | TypeScript strict check |
 
 ---
@@ -306,7 +308,7 @@ To maximize SEO discoverability, the site serves a dynamic `/sitemap.xml` genera
 - **Generation Logic:**
 
   1. Fetch all static routes (e.g. `/` as priority `1.0`, `/user/login` as priority `0.3`).
-  2. Query D1 database for all published blog posts:
+  2. Query Supabase database for all published blog posts:
 
      ```sql
      SELECT slug, updated_at FROM blog_posts WHERE is_published = 1;
