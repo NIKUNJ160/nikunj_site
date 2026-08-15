@@ -184,7 +184,9 @@ app.post('/user/login', async (c) => {
       });
       return c.redirect('/client/dashboard');
     }
-  } catch {}
+  } catch (err: any) {
+    return c.html(loginPage('user', `Error: ${err.message}`));
+  }
 
   return c.html(loginPage('user', 'Invalid email or password.'));
 });
@@ -224,7 +226,7 @@ app.post('/user/register', async (c) => {
     });
     return c.redirect('/client/dashboard');
   } catch (err: any) {
-    const errorMsg = err.message?.includes('UNIQUE') ? 'Email is already registered.' : 'Registration failed.';
+    const errorMsg = err.message?.includes('UNIQUE') ? 'Email is already registered.' : `Registration failed: ${err.message}`;
     return c.html(registerPage(errorMsg));
   }
 });
@@ -258,7 +260,9 @@ app.post('/admin/login', async (c) => {
       });
       return c.redirect('/admin/menu');
     }
-  } catch {}
+  } catch (err: any) {
+    return c.html(loginPage('admin', `Error: ${err.message}`));
+  }
 
   return c.html(loginPage('admin', 'Invalid admin credentials.'));
 });
