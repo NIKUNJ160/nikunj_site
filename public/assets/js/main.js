@@ -22,21 +22,7 @@ function initMotion() {
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (prefersReduced) return;
 
-  // Initialize Lenis for smooth scrolling
-  const lenis = new Lenis({
-    lerp: 0.1,
-    smoothWheel: true,
-    normalizeWheel: true,
-    wheelMultiplier: 1
-  });
 
-  lenis.on("scroll", ScrollTrigger.update);
-
-  gsap.ticker.add((time) => {
-    lenis.raf(time * 1000);
-  });
-
-  gsap.ticker.lagSmoothing(0);
 
   // ScrollReveal Fade-in animations
   gsap.utils.toArray(".project-card, .service-card, .skill-pill, .gallery-item, .testimonial-card, .blog-card").forEach(elem => {

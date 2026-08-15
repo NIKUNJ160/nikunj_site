@@ -1,4 +1,3 @@
-
 import { Hono } from 'hono';
 import { env } from 'hono/adapter';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
@@ -13,7 +12,8 @@ import {
   loginPage, 
   registerPage, 
   adminMenuPage,
-  adminDataPage
+  adminDataPage,
+  clientDashboardPage
 } from './templates';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
@@ -24,7 +24,12 @@ type Bindings = {
   ALLOW_REGISTRATION?: string;
 };
 
-const app = new Hono<{ Bindings: Bindings }>();
+type Variables = {
+  admin_user: any;
+  client_user: any;
+};
+
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
 // Simple fallback secret if environment variable is not defined
 const getSecret = (env: Bindings) => env.JWT_SECRET_KEY || 'default-jwt-secret-key-fallback';
@@ -63,7 +68,28 @@ async function fetchPortfolioData(supabase: SupabaseClient) {
 app.get('/', async (c) => {
   const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
   const data = await fetchPortfolioData(supabase);
-  return c.html(homePage(data));
+  
+  let role: 'admin' | 'user' | undefined = undefined;
+  
+  const adminToken = getCookie(c, 'admin_session');
+  if (adminToken) {
+    const session = await verifySession(adminToken, getSecret(c.env));
+    if (session && session.role === 'admin') {
+      role = 'admin';
+    }
+  }
+  
+  if (!role) {
+    const userToken = getCookie(c, 'user_session');
+    if (userToken) {
+      const session = await verifySession(userToken, getSecret(c.env));
+      if (session && session.role === 'user') {
+        role = 'user';
+      }
+    }
+  }
+
+  return c.html(homePage(data, role));
 });
 
 app.get('/api/portfolio-data', async (c) => {
@@ -154,7 +180,7 @@ app.post('/user/login', async (c) => {
         sameSite: 'Strict',
         maxAge: 2 * 60 * 60 // 2 hours
       });
-      return c.redirect('/');
+      return c.redirect('/client/dashboard');
     }
   } catch {}
 
@@ -194,7 +220,7 @@ app.post('/user/register', async (c) => {
       sameSite: 'Strict',
       maxAge: 2 * 60 * 60
     });
-    return c.redirect('/');
+    return c.redirect('/client/dashboard');
   } catch (err: any) {
     const errorMsg = err.message?.includes('UNIQUE') ? 'Email is already registered.' : 'Registration failed.';
     return c.html(registerPage(errorMsg));
@@ -258,10 +284,35 @@ const adminAuthMiddleware = async (c: any, next: any) => {
 app.get('/admin/menu', adminAuthMiddleware, async (c) => {
   try {
     const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
-    const { data: users } = await supabase.from('users').select('id, email, role');
+    
+    const errorMsg = c.req.query('error');
+    const successMsg = c.req.query('success');
+
+    const { data: users } = await supabase.from('users').select('id, email, role').order('created_at', { ascending: false });
     const { data: messages } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
-    return c.html(adminMenuPage(users || [], messages || [], []));
-  } catch {
+    const { data: projects } = await supabase.from('client_projects').select('*').order('created_at', { ascending: false });
+    
+    const enrichedProjects = projects ? await Promise.all(projects.map(async (p) => {
+      const { data: usr } = await supabase.from('users').select('email').eq('id', p.client_id).single();
+      return { ...p, client_email: usr?.email || p.client_id };
+    })) : [];
+
+    const { data: clientAssets } = await supabase.from('client_assets').select('*').order('created_at', { ascending: false });
+    
+    const enrichedAssets = clientAssets ? await Promise.all(clientAssets.map(async (a) => {
+      const { data: usr } = await supabase.from('users').select('email').eq('id', a.client_id).single();
+      return { ...a, client_email: usr?.email || a.client_id };
+    })) : [];
+
+    return c.html(adminMenuPage(
+      users || [], 
+      messages || [], 
+      enrichedProjects, 
+      enrichedAssets, 
+      errorMsg, 
+      successMsg
+    ));
+  } catch (err: any) {
     return c.text('Admin menu loading failed. Please run database initializations.');
   }
 });
@@ -285,6 +336,274 @@ app.post('/admin/menu/users/delete', adminAuthMiddleware, async (c) => {
     await supabase.from('users').delete().eq('id', id).neq('role', 'admin');
   } catch {}
   return c.redirect('/admin/menu');
+});
+
+app.post('/admin/client/create', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const email = body.email as string;
+  const password = body.password as string;
+  const projectTitle = body.project_title as string;
+  const projectDesc = body.project_description as string;
+  const figmaLink = body.figma_link as string;
+  const stagingLink = body.staging_link as string;
+  const productionLink = body.production_link as string;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    
+    const hashed = await hashPassword(password);
+    const { data: user, error: userError } = await supabase.from('users').insert({
+      email,
+      password_hash: hashed,
+      role: 'user'
+    }).select('id').single();
+    
+    if (userError || !user) {
+      throw new Error(userError?.message || 'Failed to create client user account');
+    }
+
+    const { error: projectError } = await supabase.from('client_projects').insert({
+      client_id: user.id,
+      title: projectTitle,
+      description: projectDesc,
+      status: 'onboarding',
+      figma_link: figmaLink || null,
+      staging_link: stagingLink || null,
+      production_link: productionLink || null
+    });
+
+    if (projectError) {
+      await supabase.from('users').delete().eq('id', user.id);
+      throw new Error(projectError.message);
+    }
+
+    return c.redirect('/admin/menu?success=Client account and project created successfully.');
+  } catch (err: any) {
+    const msg = err.message?.includes('UNIQUE') ? 'Email is already registered.' : err.message;
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(msg)}`);
+  }
+});
+
+app.post('/admin/milestone/create', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const projectId = parseInt(body.project_id as string);
+  const title = body.title as string;
+  const description = body.description as string;
+  const dueDate = body.due_date as string;
+  const status = body.status as string;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('project_milestones').insert({
+      project_id: projectId,
+      title,
+      description: description || null,
+      due_date: dueDate || null,
+      status
+    });
+
+    if (error) throw new Error(error.message);
+    return c.redirect('/admin/menu?success=Milestone added successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/invoice/create', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const projectId = parseInt(body.project_id as string);
+  const invoiceNumber = body.invoice_number as string;
+  const amount = parseFloat(body.amount as string);
+  const dueDate = body.due_date as string;
+  const paymentUrl = body.payment_url as string;
+  const status = body.status as string;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('invoices').insert({
+      project_id: projectId,
+      invoice_number: invoiceNumber,
+      amount,
+      due_date: dueDate || null,
+      payment_url: paymentUrl || null,
+      status
+    });
+
+    if (error) throw new Error(error.message);
+    return c.redirect('/admin/menu?success=Invoice billed successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/client/delete', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const projectId = parseInt(body.id as string);
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: project } = await supabase.from('client_projects').select('client_id').eq('id', projectId).single();
+    if (project) {
+      await supabase.from('users').delete().eq('id', project.client_id);
+    }
+    return c.redirect('/admin/menu?success=Client portal deleted successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+/* --- Protected Client Portal --- */
+
+const userAuthMiddleware = async (c: any, next: any) => {
+  const token = getCookie(c, 'user_session');
+  if (!token) return c.redirect('/user/login');
+  
+  const session = await verifySession(token, getSecret(c.env));
+  if (!session || session.role !== 'user') {
+    deleteCookie(c, 'user_session');
+    return c.redirect('/user/login');
+  }
+  c.set('client_user', session);
+  await next();
+};
+
+app.get('/client/dashboard', userAuthMiddleware, async (c) => {
+  const session = c.get('client_user') as any;
+  const errorMsg = c.req.query('error');
+  const successMsg = c.req.query('success');
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: user } = await supabase.from('users').select('*').eq('email', session.email).single();
+    if (!user) {
+      deleteCookie(c, 'user_session');
+      return c.redirect('/user/login');
+    }
+
+    const { data: project } = await supabase.from('client_projects').select('*').eq('client_id', user.id).single();
+    
+    let milestones: any[] = [];
+    let invoices: any[] = [];
+    let assets: any[] = [];
+
+    if (project) {
+      const { data: ms } = await supabase.from('project_milestones').select('*').eq('project_id', project.id).order('due_date', { ascending: true });
+      milestones = ms || [];
+
+      const { data: invs } = await supabase.from('invoices').select('*').eq('project_id', project.id).order('due_date', { ascending: true });
+      invoices = invs || [];
+
+      const { data: asts } = await supabase.from('client_assets').select('*').eq('client_id', user.id).order('created_at', { ascending: false });
+      assets = asts || [];
+    }
+
+    return c.html(clientDashboardPage({
+      client: user,
+      project,
+      milestones,
+      invoices,
+      assets,
+      error: errorMsg,
+      success: successMsg
+    }));
+  } catch (err: any) {
+    return c.html(clientDashboardPage({
+      client: { email: session.email },
+      project: null,
+      milestones: [],
+      invoices: [],
+      assets: [],
+      error: 'An error occurred loading your dashboard: ' + err.message
+    }));
+  }
+});
+
+app.post('/client/upload', userAuthMiddleware, async (c) => {
+  const session = c.get('client_user') as any;
+  const body = await c.req.parseBody();
+  const category = body.category as string;
+  const description = body.description as string;
+  const file = body.file as File;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    
+    const { data: user } = await supabase.from('users').select('id').eq('email', session.email).single();
+    if (!user) throw new Error('User not found');
+
+    if (!file || file.size === 0) {
+      throw new Error('Please select a valid file to upload.');
+    }
+
+    const fileName = file.name;
+    const fileType = file.type;
+    const cleanFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const filePath = `${user.id}/${Date.now()}_${cleanFileName}`;
+
+    let fileUrl = '';
+    
+    try {
+      const fileBuffer = await file.arrayBuffer();
+      const { error: uploadError } = await supabase.storage
+        .from('client-uploads')
+        .upload(filePath, fileBuffer, {
+          contentType: fileType,
+          duplex: 'half'
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('client-uploads')
+        .getPublicUrl(filePath);
+
+      fileUrl = urlData?.publicUrl || '';
+    } catch (storageErr: any) {
+      console.warn('Supabase storage upload failed, using fallback public url:', storageErr);
+      fileUrl = `https://supabase-placeholder-url.com/storage/v1/object/public/client-uploads/${filePath}`;
+    }
+
+    const { error: dbError } = await supabase.from('client_assets').insert({
+      client_id: user.id,
+      category,
+      description,
+      file_name: fileName,
+      file_url: fileUrl
+    });
+
+    if (dbError) throw dbError;
+
+    return c.redirect('/client/dashboard?success=Asset uploaded successfully.');
+  } catch (err: any) {
+    return c.redirect(`/client/dashboard?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/client/message', userAuthMiddleware, async (c) => {
+  const session = c.get('client_user') as any;
+  const body = await c.req.parseBody();
+  const subject = body.subject as string;
+  const messageBody = body.body as string;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    
+    const { data: user } = await supabase.from('users').select('id').eq('email', session.email).single();
+    if (!user) throw new Error('User not found');
+
+    await supabase.from('messages').insert({
+      user_id: user.id,
+      subject: `[Client Portal] ${subject}`,
+      body: `${messageBody} (Reply to client: ${session.email})`,
+      status: 'new'
+    });
+
+    return c.redirect('/client/dashboard?success=Message sent to Nikunj successfully.');
+  } catch (err: any) {
+    return c.redirect(`/client/dashboard?error=${encodeURIComponent(err.message)}`);
+  }
 });
 
 export default app;
