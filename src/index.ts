@@ -1,5 +1,6 @@
-/// <reference types="@cloudflare/workers-types" />
+
 import { Hono } from 'hono';
+import { env } from 'hono/adapter';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { 
   verifyPassword, 
@@ -60,13 +61,13 @@ async function fetchPortfolioData(supabase: SupabaseClient) {
 /* --- Public / General Routes --- */
 
 app.get('/', async (c) => {
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+  const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
   const data = await fetchPortfolioData(supabase);
   return c.html(homePage(data));
 });
 
 app.get('/api/portfolio-data', async (c) => {
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+  const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
   const data = await fetchPortfolioData(supabase);
   return c.json(data);
 });
@@ -75,7 +76,7 @@ app.get('/api/portfolio-data', async (c) => {
 app.get('/sitemap.xml', async (c) => {
   let blogs: any[] = [];
   try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
     const { data } = await supabase.from('blog_posts').select('slug, updated_at').eq('is_published', 1);
     blogs = data || [];
   } catch {}
@@ -120,7 +121,7 @@ app.post('/contact', async (c) => {
   const message = body.message as string;
 
   try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
     await supabase.from('messages').insert({
       subject: `Contact from ${name}`,
       body: `${message} (Reply to: ${email})`,
@@ -143,7 +144,7 @@ app.post('/user/login', async (c) => {
   const password = body.password as string;
 
   try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
     const { data: user } = await supabase.from('users').select('*').eq('email', email).single();
     if (user && await verifyPassword(password, user.password_hash as string)) {
       const token = await createSession(email, user.role as 'admin' | 'user', getSecret(c.env));
@@ -161,14 +162,14 @@ app.post('/user/login', async (c) => {
 });
 
 app.get('/user/register', (c) => {
-  if (c.env.ALLOW_REGISTRATION === 'false') {
+  if (env<Bindings>(c).ALLOW_REGISTRATION === 'false') {
     return c.text('Registration is disabled in this environment.');
   }
   return c.html(registerPage());
 });
 
 app.post('/user/register', async (c) => {
-  if (c.env.ALLOW_REGISTRATION === 'false') {
+  if (env<Bindings>(c).ALLOW_REGISTRATION === 'false') {
     return c.text('Registration is disabled.');
   }
 
@@ -178,7 +179,7 @@ app.post('/user/register', async (c) => {
 
   try {
     const hashed = await hashPassword(password);
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
     const { error } = await supabase.from('users').insert({
       email,
       password_hash: hashed,
@@ -217,7 +218,7 @@ app.post('/admin/login', async (c) => {
   const password = body.password as string;
 
   try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
     const { data: user } = await supabase.from('users').select('*').eq('email', email).eq('role', 'admin').single();
     if (user && await verifyPassword(password, user.password_hash as string)) {
       const token = await createSession(email, 'admin', getSecret(c.env));
@@ -256,7 +257,7 @@ const adminAuthMiddleware = async (c: any, next: any) => {
 
 app.get('/admin/menu', adminAuthMiddleware, async (c) => {
   try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
     const { data: users } = await supabase.from('users').select('id, email, role');
     const { data: messages } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
     return c.html(adminMenuPage(users || [], messages || [], []));
@@ -267,7 +268,7 @@ app.get('/admin/menu', adminAuthMiddleware, async (c) => {
 
 app.get('/admin/data', adminAuthMiddleware, async (c) => {
   try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
     const { data: blogPosts } = await supabase.from('blog_posts').select('id, title, slug, is_published, created_at').order('created_at', { ascending: false });
     const { data: metadata } = await supabase.from('site_metadata').select('*');
     return c.html(adminDataPage(blogPosts || [], metadata || []));
@@ -280,7 +281,7 @@ app.post('/admin/menu/users/delete', adminAuthMiddleware, async (c) => {
   const body = await c.req.parseBody();
   const id = body.id as string;
   try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
     await supabase.from('users').delete().eq('id', id).neq('role', 'admin');
   } catch {}
   return c.redirect('/admin/menu');
