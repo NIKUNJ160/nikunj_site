@@ -48,6 +48,10 @@ export function layout(title: string, content: string, description: string = "Po
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   <script src="https://unpkg.com/lenis@1.1.9/dist/lenis.min.js"></script>
   <script src="/assets/js/main.js"></script>
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>`;
 }
