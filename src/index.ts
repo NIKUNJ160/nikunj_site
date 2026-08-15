@@ -250,21 +250,27 @@ app.post('/admin/login', async (c) => {
   try {
     const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
     const { data: user } = await supabase.from('users').select('*').eq('email', email).eq('role', 'admin').single();
-    if (user && await verifyPassword(password, user.password_hash as string)) {
-      const token = await createSession(email, 'admin', getSecret(c.env));
-      setCookie(c, 'admin_session', token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'Strict',
-        maxAge: 2 * 60 * 60
-      });
-      return c.redirect('/admin/menu');
+    
+    if (!user) {
+      return c.html(loginPage('admin', `Error: User not found in database for email: ${email} and role: admin.`));
     }
-  } catch (err: any) {
-    return c.html(loginPage('admin', `Error: ${err.message}`));
-  }
+    
+    const verified = await verifyPassword(password, user.password_hash as string);
+    if (!verified) {
+      return c.html(loginPage('admin', `Error: Password verification failed. Database stored hash is: "${user.password_hash}".`));
+    }
 
-  return c.html(loginPage('admin', 'Invalid admin credentials.'));
+    const token = await createSession(email, 'admin', getSecret(c.env));
+    setCookie(c, 'admin_session', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Strict',
+      maxAge: 2 * 60 * 60
+    });
+    return c.redirect('/admin/menu');
+  } catch (err: any) {
+    return c.html(loginPage('admin', `Error: Exception: ${err.message}`));
+  }
 });
 
 app.post('/admin/logout', (c) => {
