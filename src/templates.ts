@@ -1173,3 +1173,124 @@ export function clientDashboardPage(data: {
   `;
   return layout("Client Portal Dashboard", content, "My Portal", "user");
 }
+
+export function proposalRequestPage(): string {
+  const content = `
+    <div class="section-container" style="padding-top:120px;">
+      <div class="bento-box">
+        <h1 style="margin-bottom:1rem; font-size:2rem; letter-spacing:-0.03em;">Request a Project</h1>
+        <p style="color:var(--text-secondary); margin-bottom:2rem;">Fill out the details below to submit a proposal. We will review it and get back to you shortly.</p>
+        <form action="/api/proposals" method="POST" class="contact-form">
+          <input type="text" name="title" placeholder="Project Title" required class="form-input">
+          <textarea name="content_description" placeholder="Project Description & Content" required class="form-textarea" style="height:100px;"></textarea>
+          <input type="number" name="budget" placeholder="Estimated Budget (USD)" class="form-input">
+          <textarea name="tech_requirements" placeholder="Technical Requirements (Optional)" class="form-textarea" style="height:80px;"></textarea>
+          <textarea name="design_requirements" placeholder="Design Requirements (Optional)" class="form-textarea" style="height:80px;"></textarea>
+          <button type="submit" class="btn">Submit Proposal</button>
+        </form>
+      </div>
+    </div>
+  `;
+  return layout("Request a Project", content, "Submit a project proposal", "user");
+}
+
+export function proposalListPage(proposals: any[], role: 'admin' | 'user'): string {
+  const proposalsHtml = proposals.length > 0 
+    ? proposals.map(p => `
+      <div class="bento-box" style="margin-bottom:1rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+          <h3 style="margin:0;">${p.title}</h3>
+          <span style="padding:4px 8px; border-radius:4px; font-size:0.8rem; background:var(--bg-card); border:1px solid var(--border-glass);">
+            ${p.status.toUpperCase()}
+          </span>
+        </div>
+        <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1rem;">
+          Budget: $${p.budget || 'N/A'} | Created: ${new Date(p.created_at).toLocaleDateString()}
+        </p>
+        <a href="${role === 'admin' ? '/admin' : '/client'}/proposals/${p.id}" class="btn" style="display:inline-block; font-size:0.85rem; padding:6px 12px;">View Details</a>
+      </div>
+    `).join('')
+    : '<p style="color:var(--text-secondary);">No proposals found.</p>';
+
+  const content = `
+    <div class="section-container" style="padding-top:120px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+        <h1 style="font-size:2rem; letter-spacing:-0.03em;">Project Proposals</h1>
+        ${role === 'user' ? `<a href="/client/proposals/new" class="btn">Request Project</a>` : ''}
+      </div>
+      <div style="display:grid; gap:1rem;">
+        ${proposalsHtml}
+      </div>
+    </div>
+  `;
+  return layout("Project Proposals", content, "Manage project proposals", role);
+}
+
+export function proposalDetailsPage(proposal: any, comments: any[], role: 'admin' | 'user'): string {
+  const commentsHtml = comments.length > 0
+    ? comments.map(c => `
+      <div style="margin-bottom:1rem; padding:1rem; background:var(--bg-card); border-radius:8px; border:1px solid var(--border-glass);">
+        <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.5rem;">
+          <strong>User ID: ${c.user_id}</strong> on ${new Date(c.created_at).toLocaleString()}
+        </div>
+        <div>${c.comment}</div>
+      </div>
+    `).join('')
+    : '<p style="color:var(--text-secondary);">No comments yet.</p>';
+
+  const actionForm = role === 'admin' && proposal.status !== 'approved' && proposal.status !== 'rejected'
+    ? `
+      <div style="margin-top:2rem; padding-top:1rem; border-top:1px solid var(--border-glass);">
+        <form action="/api/proposals/${proposal.id}/approve" method="POST" style="display:inline;">
+          <button type="submit" class="btn" style="background:#22c55e; color:white;">Approve Proposal</button>
+        </form>
+      </div>
+    ` : '';
+
+  const content = `
+    <div class="section-container" style="padding-top:120px;">
+      <a href="${role === 'admin' ? '/admin' : '/client'}/proposals" style="color:var(--text-secondary); text-decoration:none; display:inline-block; margin-bottom:1rem;">&larr; Back to Proposals</a>
+      <div class="bento-box" style="margin-bottom:2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <h1 style="font-size:2rem; margin:0;">${proposal.title}</h1>
+          <span style="padding:4px 8px; border-radius:4px; font-size:0.8rem; background:var(--bg-card); border:1px solid var(--border-glass);">
+            STATUS: ${proposal.status.toUpperCase()}
+          </span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+          <div>
+            <strong>Budget:</strong> $${proposal.budget || 'N/A'}
+          </div>
+          <div>
+            <strong>Client ID:</strong> ${proposal.client_id}
+          </div>
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <strong>Description:</strong>
+          <p style="color:var(--text-secondary); white-space:pre-wrap;">${proposal.content_description}</p>
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <strong>Tech Requirements:</strong>
+          <p style="color:var(--text-secondary); white-space:pre-wrap;">${proposal.tech_requirements || 'None'}</p>
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <strong>Design Requirements:</strong>
+          <p style="color:var(--text-secondary); white-space:pre-wrap;">${proposal.design_requirements || 'None'}</p>
+        </div>
+        ${actionForm}
+      </div>
+
+      <div class="bento-box">
+        <h2 style="font-size:1.5rem; margin-bottom:1rem;">Negotiation / Comments</h2>
+        <div style="margin-bottom:1.5rem;">
+          ${commentsHtml}
+        </div>
+        <form action="/api/proposals/${proposal.id}/comments" method="POST" class="contact-form">
+          <textarea name="comment" placeholder="Add a comment or ask for changes..." required class="form-textarea" style="height:80px;"></textarea>
+          <button type="submit" class="btn">Post Comment</button>
+        </form>
+      </div>
+    </div>
+  `;
+  return layout(proposal.title, content, "Proposal Details", role);
+}

@@ -13,7 +13,10 @@ import {
   registerPage, 
   adminMenuPage,
   adminDataPage,
-  clientDashboardPage
+  clientDashboardPage,
+  proposalRequestPage,
+  proposalListPage,
+  proposalDetailsPage
 } from './templates';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
@@ -795,6 +798,182 @@ app.post('/client/message', userAuthMiddleware, async (c) => {
     return c.redirect('/client/dashboard?success=Message sent to Nikunj successfully.');
   } catch (err: any) {
     return c.redirect(`/client/dashboard?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+/* --- Project Proposals (Client) --- */
+
+app.get('/client/proposals/new', userAuthMiddleware, (c) => {
+  return c.html(proposalRequestPage());
+});
+
+app.post('/api/proposals', userAuthMiddleware, async (c) => {
+  const session = c.get('client_user') as any;
+  const body = await c.req.parseBody();
+  const title = body.title as string;
+  const content_description = body.content_description as string;
+  const budget = body.budget ? parseFloat(body.budget as string) : null;
+  const tech_requirements = body.tech_requirements as string;
+  const design_requirements = body.design_requirements as string;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: user } = await supabase.from('users').select('id').eq('email', session.email).single();
+    if (!user) throw new Error('User not found');
+
+    const { error } = await supabase.from('project_proposals').insert({
+      client_id: user.id,
+      title,
+      content_description,
+      budget,
+      tech_requirements: tech_requirements || null,
+      design_requirements: design_requirements || null,
+      status: 'pending'
+    });
+    if (error) throw new Error(error.message);
+
+    return c.redirect('/client/proposals?success=Proposal submitted successfully.');
+  } catch (err: any) {
+    return c.redirect(`/client/dashboard?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.get('/client/proposals', userAuthMiddleware, async (c) => {
+  const session = c.get('client_user') as any;
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: user } = await supabase.from('users').select('id').eq('email', session.email).single();
+    if (!user) throw new Error('User not found');
+
+    const { data: proposals } = await supabase.from('project_proposals').select('*').eq('client_id', user.id).order('created_at', { ascending: false });
+    return c.html(proposalListPage(proposals || [], 'user'));
+  } catch (err: any) {
+    return c.redirect(`/client/dashboard?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.get('/client/proposals/:id', userAuthMiddleware, async (c) => {
+  const session = c.get('client_user') as any;
+  const id = c.req.param('id');
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: user } = await supabase.from('users').select('id').eq('email', session.email).single();
+    if (!user) throw new Error('User not found');
+
+    const { data: proposal, error: propErr } = await supabase.from('project_proposals').select('*').eq('id', id).eq('client_id', user.id).single();
+    if (propErr || !proposal) throw new Error('Proposal not found');
+
+    const { data: comments } = await supabase.from('proposal_comments').select('*').eq('proposal_id', id).order('created_at', { ascending: true });
+    
+    return c.html(proposalDetailsPage(proposal, comments || [], 'user'));
+  } catch (err: any) {
+    return c.redirect(`/client/proposals?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/api/proposals/:id/comments', async (c) => {
+  // Shared route for admin and user comments
+  const id = c.req.param('id');
+  const body = await c.req.parseBody();
+  const comment = body.comment as string;
+  
+  let role = 'user';
+  let email = '';
+  const adminToken = getCookie(c, 'admin_session');
+  if (adminToken) {
+    const session = await verifySession(adminToken, getSecret(c.env));
+    if (session && session.role === 'admin') {
+      role = 'admin';
+      email = session.email;
+    }
+  }
+  if (!email) {
+    const userToken = getCookie(c, 'user_session');
+    if (userToken) {
+      const session = await verifySession(userToken, getSecret(c.env));
+      if (session && session.role === 'user') {
+        role = 'user';
+        email = session.email;
+      }
+    }
+  }
+  if (!email) return c.redirect('/user/login');
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: user } = await supabase.from('users').select('id').eq('email', email).single();
+    if (!user) throw new Error('User not found');
+
+    // Add comment
+    await supabase.from('proposal_comments').insert({
+      proposal_id: id,
+      user_id: user.id,
+      comment
+    });
+
+    // Update status to 'negotiating' if not approved
+    const { data: proposal } = await supabase.from('project_proposals').select('status').eq('id', id).single();
+    if (proposal && proposal.status === 'pending') {
+      await supabase.from('project_proposals').update({ status: 'negotiating' }).eq('id', id);
+    }
+
+    const redirectPath = role === 'admin' ? `/admin/proposals/${id}` : `/client/proposals/${id}`;
+    return c.redirect(redirectPath);
+  } catch (err: any) {
+    return c.text('Failed to post comment: ' + err.message);
+  }
+});
+
+/* --- Project Proposals (Admin) --- */
+
+app.get('/admin/proposals', adminAuthMiddleware, async (c) => {
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: proposals } = await supabase.from('project_proposals').select('*').order('created_at', { ascending: false });
+    return c.html(proposalListPage(proposals || [], 'admin'));
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.get('/admin/proposals/:id', adminAuthMiddleware, async (c) => {
+  const id = c.req.param('id');
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: proposal, error: propErr } = await supabase.from('project_proposals').select('*').eq('id', id).single();
+    if (propErr || !proposal) throw new Error('Proposal not found');
+
+    const { data: comments } = await supabase.from('proposal_comments').select('*').eq('proposal_id', id).order('created_at', { ascending: true });
+    
+    return c.html(proposalDetailsPage(proposal, comments || [], 'admin'));
+  } catch (err: any) {
+    return c.redirect(`/admin/proposals?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/api/proposals/:id/approve', adminAuthMiddleware, async (c) => {
+  const id = c.req.param('id');
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: proposal } = await supabase.from('project_proposals').select('*').eq('id', id).single();
+    if (!proposal) throw new Error('Proposal not found');
+
+    // Update proposal status
+    await supabase.from('project_proposals').update({ status: 'approved' }).eq('id', id);
+
+    // Create client project
+    await supabase.from('client_projects').insert({
+      client_id: proposal.client_id,
+      title: proposal.title,
+      description: proposal.content_description,
+      status: 'onboarding'
+    });
+
+    // Invoices will be generated manually as requested.
+
+    return c.redirect(`/admin/proposals/${id}?success=Proposal approved and project created!`);
+  } catch (err: any) {
+    return c.redirect(`/admin/proposals/${id}?error=${encodeURIComponent(err.message)}`);
   }
 });
 

@@ -2,7 +2,6 @@
   "name": "nikunj-portfolio",
   "version": "1.0.0",
   "scripts": {
-    "dev": "vercel dev",
     "deploy": "vercel",
     "typecheck": "tsc --noEmit"
   },

@@ -81,6 +81,28 @@ CREATE TABLE IF NOT EXISTS client_assets (
     file_url TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+-- Client Project Proposals
+CREATE TABLE IF NOT EXISTS project_proposals (
+    id SERIAL PRIMARY KEY,
+    client_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content_description TEXT,
+    budget NUMERIC(10, 2),
+    tech_requirements TEXT,
+    design_requirements TEXT,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'negotiating', 'approved', 'rejected')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Proposal Comments (Negotiation)
+CREATE TABLE IF NOT EXISTS proposal_comments (
+    id SERIAL PRIMARY KEY,
+    proposal_id INTEGER NOT NULL REFERENCES project_proposals(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Seed default admin account (email: [EMAIL_ADDRESS], password: admin123)
 INSERT INTO users (email, password_hash, role)
