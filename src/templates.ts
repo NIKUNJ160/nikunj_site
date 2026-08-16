@@ -321,7 +321,13 @@ export function adminMenuPage(
   projects: any[] = [], 
   clientAssets: any[] = [],
   error?: string,
-  success?: string
+  success?: string,
+  extra?: {
+    allProjects?: any[];
+    allBlogs?: any[];
+    allServices?: any[];
+    metadata?: any;
+  }
 ): string {
   const usersHtml = users.map(u => `
     <tr>
@@ -338,47 +344,100 @@ export function adminMenuPage(
 
   const messagesHtml = messages.map(m => `
     <div class="glass message-card">
-      <div class="message-header">
-        <h4>User: ${m.email || 'Anonymous'}</h4>
-        <span class="text-muted">${new Date(m.created_at).toLocaleString()}</span>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; gap: 0.5rem;">
+        <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700;">${m.subject}</h4>
+        <span class="status-badge" style="font-size:0.7rem; padding: 2px 8px; background: rgba(255,255,255,0.05); color: var(--text-primary);">${m.status}</span>
       </div>
-      <p class="message-subject"><strong>Subject:</strong> ${m.subject}</p>
-      <p class="message-body">${m.body}</p>
+      <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">${m.body}</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-glass); padding-top: 0.5rem; margin-top: 0.5rem;">
+        <small class="text-muted">${new Date(m.created_at).toLocaleString()}</small>
+        <form action="/admin/menu/messages/delete" method="POST" style="margin:0;">
+          <input type="hidden" name="id" value="${m.id}">
+          <button type="submit" class="btn-delete" style="padding: 2px 8px; font-size: 0.75rem;" onclick="return confirm('Delete message?')">Delete</button>
+        </form>
+      </div>
     </div>
   `).join('');
 
   const projectsOptionsHtml = projects.map(p => `
-    <option value="${p.id}">${p.title} (${p.client_email || p.client_id})</option>
+    <option value="${p.id}">${p.title} (${p.client_email})</option>
   `).join('');
 
   const projectsHtml = projects.map(p => `
-    <div class="glass message-card" style="margin-bottom:1rem;">
-      <div class="message-header">
-        <h4>Project: ${p.title}</h4>
-        <span class="role-badge status-${p.status}">${p.status}</span>
+    <div class="glass message-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; gap: 0.5rem;">
+        <h4 style="margin:0; font-weight: 700;">${p.title}</h4>
+        <span class="status-badge status-${p.status}" style="font-size:0.7rem; padding: 2px 8px;">${p.status}</span>
       </div>
-      <p><strong>Client ID/Email:</strong> ${p.client_email || p.client_id}</p>
-      <p>${p.description || 'No description'}</p>
-      <p style="font-size:0.85rem; margin-top:0.5rem; display:flex; gap:0.75rem; flex-wrap:wrap;">
-        ${p.figma_link ? `<a href="${p.figma_link}" target="_blank">Figma</a>` : ''}
-        ${p.staging_link ? `<a href="${p.staging_link}" target="_blank">Staging</a>` : ''}
-        ${p.production_link ? `<a href="${p.production_link}" target="_blank">Live Site</a>` : ''}
-      </p>
-      <form action="/admin/client/delete" method="POST" style="margin-top:0.5rem; display:inline;">
-        <input type="hidden" name="id" value="${p.id}">
-        <button type="submit" class="btn-delete" style="padding:4px 8px; font-size:0.8rem;" onclick="return confirm('Delete this project?')">Delete Project</button>
-      </form>
+      <small style="display:block; margin-bottom:0.5rem;" class="text-muted">Client: <strong>${p.client_email}</strong></small>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; font-size:0.75rem; margin-bottom:0.5rem;">
+        ${p.figma_link ? `<a href="${p.figma_link}" target="_blank" style="color:var(--accent-color);">Figma</a>` : ''}
+        ${p.staging_link ? `<a href="${p.staging_link}" target="_blank" style="color:var(--accent-color);">Staging</a>` : ''}
+        ${p.production_link ? `<a href="${p.production_link}" target="_blank" style="color:var(--accent-color);">Production</a>` : ''}
+      </div>
+      <div style="border-top:1px solid var(--border-glass); padding-top:0.5rem; display:flex; justify-content:space-between; align-items:center;">
+        <small class="text-muted">Created: ${new Date(p.created_at).toLocaleDateString()}</small>
+        <form action="/admin/client/delete" method="POST" style="margin:0;">
+          <input type="hidden" name="id" value="${p.id}">
+          <button type="submit" class="btn-delete" style="padding: 2px 8px; font-size:0.75rem;" onclick="return confirm('Delete client portal and all milestone/invoices? This deletes the client user too.')">Delete Portal</button>
+        </form>
+      </div>
     </div>
   `).join('');
 
   const clientAssetsHtml = clientAssets.map(a => `
-    <div class="glass message-card" style="margin-bottom:1rem;">
-      <div class="message-header">
-        <h4>File: <a href="${a.file_url}" target="_blank" download="${a.file_name}">${a.file_name}</a></h4>
-        <span class="role-badge role-user" style="font-size:0.75rem; padding:2px 8px;">${a.category}</span>
+    <div class="glass message-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; gap: 0.5rem;">
+        <h4 style="margin: 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><a href="${a.file_url}" target="_blank" download style="color:var(--accent-color); font-weight:600;">${a.file_name}</a></h4>
+        <span class="role-badge role-user" style="font-size:0.65rem; padding: 2px 8px;">${a.category}</span>
       </div>
-      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem;"><strong>From:</strong> ${a.client_email || a.client_id} on ${new Date(a.created_at).toLocaleString()}</p>
-      <p><strong>Notes:</strong> ${a.description || 'No notes'}</p>
+      <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem;">${a.description || 'No description notes.'}</p>
+      <small style="display:block; margin-bottom:0.5rem;" class="text-muted">Client: <strong>${a.client_email}</strong></small>
+      <small class="text-muted" style="font-size: 0.75rem;">Uploaded: ${new Date(a.created_at).toLocaleString()}</small>
+    </div>
+  `).join('');
+
+  const allProjects = extra?.allProjects || [];
+  const allBlogs = extra?.allBlogs || [];
+  const allServices = extra?.allServices || [];
+  const metadata = extra?.metadata || {};
+
+  const servicesListHtml = allServices.map(s => `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 6px; gap: 1rem; margin-bottom: 0.5rem;">
+      <div style="flex: 1; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <strong>${s.title}</strong>
+        <span style="font-size: 0.75rem; color: var(--text-secondary); display: block; overflow: hidden; text-overflow: ellipsis;">${s.description}</span>
+      </div>
+      <form action="/admin/service/delete" method="POST" style="margin:0; flex-shrink:0;">
+        <input type="hidden" name="id" value="${s.id}">
+        <button type="submit" class="btn-delete" style="padding: 3px 6px; font-size: 0.7rem;" onclick="return confirm('Delete service ${s.title}?')">Delete</button>
+      </form>
+    </div>
+  `).join('');
+
+  const projectsListHtml = allProjects.map(p => `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 6px; gap: 1rem; margin-bottom: 0.5rem;">
+      <div style="flex: 1; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <strong>${p.title}</strong>
+        <span class="role-badge role-user" style="font-size:0.65rem; padding: 1px 6px;">${p.category || 'Portfolio'}</span>
+      </div>
+      <form action="/admin/content/delete" method="POST" style="margin:0; flex-shrink:0;">
+        <input type="hidden" name="id" value="${p.id}">
+        <button type="submit" class="btn-delete" style="padding: 3px 6px; font-size: 0.7rem;" onclick="return confirm('Delete project ${p.title}?')">Delete</button>
+      </form>
+    </div>
+  `).join('');
+
+  const blogsListHtml = allBlogs.map(b => `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 6px; gap: 1rem; margin-bottom: 0.5rem;">
+      <div style="flex: 1; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <strong>${b.title}</strong>
+        <span class="role-badge role-admin" style="font-size:0.65rem; padding: 1px 6px;">/blog/${b.slug}</span>
+      </div>
+      <form action="/admin/content/delete" method="POST" style="margin:0; flex-shrink:0;">
+        <input type="hidden" name="id" value="${b.id}">
+        <button type="submit" class="btn-delete" style="padding: 3px 6px; font-size: 0.7rem;" onclick="return confirm('Delete blog ${b.title}?')">Delete</button>
+      </form>
     </div>
   `).join('');
 
@@ -386,17 +445,25 @@ export function adminMenuPage(
     <style>
       .admin-dashboard {
         padding: 120px 24px 60px;
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
       }
-      .admin-flex {
+      .dashboard-header {
         display: flex;
-        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .admin-flex {
+        display: grid;
+        grid-template-columns: 1fr;
         gap: 2rem;
       }
       .admin-forms-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 1.5rem;
       }
       .admin-form-card {
@@ -531,6 +598,90 @@ export function adminMenuPage(
             </div>
           </section>
         </div>
+
+        <div class="admin-sections-manager" style="margin-top: 2rem; grid-column: 1/-1;">
+          <h3 style="border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem; margin-bottom: 1.5rem; font-weight:700;">Website Sections & Content Manager</h3>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: start;">
+            
+            <!-- 1. Manage About -->
+            <form action="/admin/about/update" method="POST" class="admin-form-card glass" style="padding: 1.5rem; border-radius: 12px; gap: 1rem;">
+              <h4 style="color: var(--accent-color); margin:0; font-weight:700;">About Section Bio</h4>
+              <div>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.25rem;">Intro Bio Paragraph 1</label>
+                <textarea name="about_bio_1" class="form-textarea" style="height:80px; width:100%;" required>${metadata.about_bio_1 || ''}</textarea>
+              </div>
+              <div>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.25rem;">Detail Bio Paragraph 2</label>
+                <textarea name="about_bio_2" class="form-textarea" style="height:80px; width:100%;" required>${metadata.about_bio_2 || ''}</textarea>
+              </div>
+              <div>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.25rem;">Profile Image File Path</label>
+                <input type="text" name="about_profile_image" value="${metadata.about_profile_image || ''}" required class="form-input">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.25rem;">Download CV File Path</label>
+                <input type="text" name="about_cv_url" value="${metadata.about_cv_url || ''}" required class="form-input">
+              </div>
+              <button type="submit" class="btn">Update About Section</button>
+            </form>
+
+            <!-- 2. Manage Services -->
+            <div class="glass" style="padding: 1.5rem; border-radius: 12px;">
+              <h4 style="color: var(--accent-color); margin: 0 0 1rem 0; font-weight:700;">Services Offered</h4>
+              <form action="/admin/service/create" method="POST" class="admin-form-card" style="padding:0; background:none; border:none; box-shadow:none; gap:0.8rem; margin-bottom:1.5rem;">
+                <input type="text" name="title" placeholder="Service Title (e.g. Web Design)" required class="form-input">
+                <textarea name="description" placeholder="Service Description" class="form-textarea" style="height:60px;" required></textarea>
+                <textarea name="icon" placeholder="Icon SVG (e.g. <svg>...</svg>)" class="form-textarea" style="height:60px;" required></textarea>
+                <button type="submit" class="btn">Add New Service</button>
+              </form>
+              <div style="border-top:1px solid var(--border-glass); padding-top:1rem; max-height:220px; overflow-y:auto;">
+                <h5 style="margin-top:0; margin-bottom:0.75rem;">Active Services:</h5>
+                ${servicesListHtml.length ? servicesListHtml : '<p class="text-secondary">No custom services added.</p>'}
+              </div>
+            </div>
+
+            <!-- 3. Manage Projects Done -->
+            <div class="glass" style="padding: 1.5rem; border-radius: 12px;">
+              <h4 style="color: var(--accent-color); margin: 0 0 1rem 0; font-weight:700;">Projects Done (Portfolio)</h4>
+              <form action="/admin/content/create" method="POST" class="admin-form-card" style="padding:0; background:none; border:none; box-shadow:none; gap:0.8rem; margin-bottom:1.5rem;">
+                <input type="hidden" name="type" value="project">
+                <input type="text" name="title" placeholder="Project Title" required class="form-input">
+                <input type="text" name="category" placeholder="Category (e.g. Web Development)" required class="form-input">
+                <select name="class_name" required class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border: 1px solid var(--border-glass);">
+                  <option value="gal_a">Web Development (gal_a)</option>
+                  <option value="gal_b">Creative Design (gal_b)</option>
+                  <option value="gal_c">Graphic Design (gal_c)</option>
+                </select>
+                <input type="text" name="image_url" placeholder="Image File Path" required class="form-input">
+                <textarea name="content" placeholder="Project Details / Description..." class="form-textarea" style="height:60px;" required></textarea>
+                <button type="submit" class="btn">Add Project Entry</button>
+              </form>
+              <div style="border-top:1px solid var(--border-glass); padding-top:1rem; max-height:220px; overflow-y:auto;">
+                <h5 style="margin-top:0; margin-bottom:0.75rem;">Active Projects:</h5>
+                ${projectsListHtml.length ? projectsListHtml : '<p class="text-secondary">No custom projects added.</p>'}
+              </div>
+            </div>
+
+            <!-- 4. Manage Blogs -->
+            <div class="glass" style="padding: 1.5rem; border-radius: 12px;">
+              <h4 style="color: var(--accent-color); margin: 0 0 1rem 0; font-weight:700;">Blog Articles</h4>
+              <form action="/admin/content/create" method="POST" class="admin-form-card" style="padding:0; background:none; border:none; box-shadow:none; gap:0.8rem; margin-bottom:1.5rem;">
+                <input type="hidden" name="type" value="blog">
+                <input type="text" name="title" placeholder="Article Title" required class="form-input">
+                <input type="text" name="slug" placeholder="Article Slug (e.g. core-vitals)" required class="form-input">
+                <textarea name="content" placeholder="Article Body Content..." class="form-textarea" style="height:60px;" required></textarea>
+                <button type="submit" class="btn">Publish Blog Article</button>
+              </form>
+              <div style="border-top:1px solid var(--border-glass); padding-top:1rem; max-height:220px; overflow-y:auto;">
+                <h5 style="margin-top:0; margin-bottom:0.75rem;">Published Articles:</h5>
+                ${blogsListHtml.length ? blogsListHtml : '<p class="text-secondary">No blog articles published.</p>'}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </div>
   `;

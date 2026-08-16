@@ -86,3 +86,39 @@ CREATE TABLE IF NOT EXISTS client_assets (
 INSERT INTO users (email, password_hash, role)
 VALUES ('[EMAIL_ADDRESS]', '037e3b7ee499a27bec84152fa9449844:dc348759dae044aa8ec1525f45dbe3df2b842645a1983ccce15b94e76be92e7d', 'admin')
 ON CONFLICT (email) DO NOTHING;
+
+-- Alter blog_posts table to add category, class_name, and image_url for projects
+ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS class_name TEXT;
+
+-- Services Table
+CREATE TABLE IF NOT EXISTS services (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    icon TEXT NOT NULL, -- The SVG HTML string
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seed default services safely
+INSERT INTO services (title, description, icon)
+SELECT 'Web Design', 'Clean, dual-theme layouts using modern glassmorphic principles.', '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z"></path></svg>'
+WHERE NOT EXISTS (SELECT 1 FROM services WHERE title = 'Web Design');
+
+INSERT INTO services (title, description, icon)
+SELECT 'Full-Stack Development', 'Edge-rendered Cloudflare Workers apps running with serverless databases.', '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>'
+WHERE NOT EXISTS (SELECT 1 FROM services WHERE title = 'Full-Stack Development');
+
+INSERT INTO services (title, description, icon)
+SELECT 'SEO & Strategy', 'Optimized page speeds, semantic tags, and dynamic sitemaps.', '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>'
+WHERE NOT EXISTS (SELECT 1 FROM services WHERE title = 'SEO & Strategy');
+
+-- Seed default about details in site_metadata
+INSERT INTO site_metadata (key, value)
+VALUES 
+('about_bio_1', 'I am a Gujarat-based Web Designer and Full-Stack Developer specializing in high-performance edge computing architectures, responsive styling, and modular layouts.'),
+('about_bio_2', 'By leveraging Cloudflare Workers, Hono, and D1 SQLite databases, I construct dynamic applications that run near-instantly at the edge, bypassing bulk frameworks and heavy client dependencies.'),
+('about_profile_image', '/assets/images/uploads/about.jpeg'),
+('about_cv_url', '/assets/Nikunjkumar_Pateliya_CV.pdf')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;

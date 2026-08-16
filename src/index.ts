@@ -54,21 +54,41 @@ app.use('*', async (c, next) => {
 // Helper: check if tables are ready, return safe fallbacks if empty
 async function fetchPortfolioData(supabase: SupabaseClient) {
   try {
-    const { data: projects } = await supabase.from('blog_posts').select('*').eq('is_published', 0);
-    const { data: blogPosts } = await supabase.from('blog_posts').select('*').eq('is_published', 1);
+    const { data: projects } = await supabase.from('blog_posts').select('*').eq('is_published', 0).order('id', { ascending: false });
+    const { data: blogPosts } = await supabase.from('blog_posts').select('*').eq('is_published', 1).order('created_at', { ascending: false });
+    const { data: dbServices } = await supabase.from('services').select('*').order('created_at', { ascending: true });
+    const { data: meta } = await supabase.from('site_metadata').select('*');
+
     const skills = [
       { name: 'TypeScript' }, { name: 'JavaScript' }, { name: 'HTML/CSS' },
       { name: 'Hono' }, { name: 'Cloudflare Workers' }, { name: 'Supabase/PostgreSQL' }
     ];
-    const services = [
-      { title: 'Web Design', description: 'Clean, dual-theme layouts using modern glassmorphic principles.' },
-      { title: 'Full-Stack Development', description: 'Edge-rendered Cloudflare Workers apps running with serverless databases.' },
-      { title: 'SEO & Strategy', description: 'Optimized page speeds, semantic tags, and dynamic sitemaps.' }
-    ];
-    return { projects: projects || [], skills, services, blogPosts: blogPosts || [] };
+
+    const metadata: Record<string, string> = {};
+    if (meta) {
+      meta.forEach((row: any) => {
+        metadata[row.key] = row.value;
+      });
+    }
+
+    let services = [];
+    if (dbServices && dbServices.length > 0) {
+      services = dbServices.map((s: any) => ({
+        title: s.title,
+        desc: s.description,
+        icon: s.icon
+      }));
+    } else {
+      services = [
+        { title: 'Web Design', desc: 'Clean, dual-theme layouts using modern glassmorphic principles.', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z"></path></svg>' },
+        { title: 'Full-Stack Development', desc: 'Edge-rendered Cloudflare Workers apps running with serverless databases.', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>' },
+        { title: 'SEO & Strategy', desc: 'Optimized page speeds, semantic tags, and dynamic sitemaps.', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>' }
+      ];
+    }
+
+    return { projects: projects || [], skills, services, blogPosts: blogPosts || [], metadata };
   } catch {
-    // If DB has not been initialized yet, return empty structures
-    return { projects: [], skills: [], services: [], blogPosts: [] };
+    return { projects: [], skills: [], services: [], blogPosts: [], metadata: {} };
   }
 }
 
@@ -319,13 +339,31 @@ app.get('/admin/menu', adminAuthMiddleware, async (c) => {
       return { ...a, client_email: usr?.email || a.client_id };
     })) : [];
 
+    const { data: allProjects } = await supabase.from('blog_posts').select('*').eq('is_published', 0).order('id', { ascending: false });
+    const { data: allBlogs } = await supabase.from('blog_posts').select('*').eq('is_published', 1).order('created_at', { ascending: false });
+    const { data: allServices } = await supabase.from('services').select('*').order('created_at', { ascending: true });
+    const { data: meta } = await supabase.from('site_metadata').select('*');
+
+    const metadata: Record<string, string> = {};
+    if (meta) {
+      meta.forEach((row: any) => {
+        metadata[row.key] = row.value;
+      });
+    }
+
     return c.html(adminMenuPage(
       users || [], 
       messages || [], 
       enrichedProjects, 
       enrichedAssets, 
       errorMsg, 
-      successMsg
+      successMsg,
+      {
+        allProjects: allProjects || [],
+        allBlogs: allBlogs || [],
+        allServices: allServices || [],
+        metadata
+      }
     ));
   } catch (err: any) {
     return c.text('Admin menu loading failed. Please run database initializations.');
@@ -462,6 +500,145 @@ app.post('/admin/client/delete', adminAuthMiddleware, async (c) => {
       await supabase.from('users').delete().eq('id', project.client_id);
     }
     return c.redirect('/admin/menu?success=Client portal deleted successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/about/update', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const bio1 = body.about_bio_1 as string;
+  const bio2 = body.about_bio_2 as string;
+  const profileImage = body.about_profile_image as string;
+  const cvUrl = body.about_cv_url as string;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const updates = [
+      { key: 'about_bio_1', value: bio1 },
+      { key: 'about_bio_2', value: bio2 },
+      { key: 'about_profile_image', value: profileImage },
+      { key: 'about_cv_url', value: cvUrl }
+    ];
+    for (const update of updates) {
+      const { error } = await supabase.from('site_metadata').upsert(update, { onConflict: 'key' });
+      if (error) throw new Error(error.message);
+    }
+    return c.redirect('/admin/menu?success=About section updated successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/service/create', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const title = body.title as string;
+  const description = body.description as string;
+  const icon = body.icon as string;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('services').insert({ title, description, icon });
+    if (error) throw new Error(error.message);
+    return c.redirect('/admin/menu?success=Service added successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/service/delete', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const id = parseInt(body.id as string);
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('services').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return c.redirect('/admin/menu?success=Service deleted successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/content/create', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const type = body.type as string; // 'project' or 'blog'
+  const title = body.title as string;
+  const content = body.content as string;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    if (type === 'project') {
+      const category = body.category as string;
+      const className = body.class_name as string;
+      const imageUrl = body.image_url as string;
+      // Generate a unique slug for the project entry
+      const tempSlug = `project-${Date.now()}`;
+      
+      const { error } = await supabase.from('blog_posts').insert({
+        title,
+        slug: tempSlug,
+        content,
+        is_published: 0,
+        category,
+        class_name: className,
+        image_url: imageUrl
+      });
+      if (error) throw new Error(error.message);
+      return c.redirect('/admin/menu?success=Project added successfully.');
+    } else {
+      const slug = body.slug as string;
+      const { error } = await supabase.from('blog_posts').insert({
+        title,
+        slug,
+        content,
+        is_published: 1
+      });
+      if (error) throw new Error(error.message);
+      return c.redirect('/admin/menu?success=Blog article published successfully.');
+    }
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/content/delete', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const id = parseInt(body.id as string);
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('blog_posts').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return c.redirect('/admin/menu?success=Content entry deleted successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/menu/messages/delete', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const id = parseInt(body.id as string);
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('messages').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return c.redirect('/admin/menu?success=Message deleted successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/menu/users/delete', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const id = parseInt(body.id as string);
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('users').delete().eq('id', id).neq('role', 'admin');
+    if (error) throw new Error(error.message);
+    return c.redirect('/admin/menu?success=User deleted successfully.');
   } catch (err: any) {
     return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
   }
