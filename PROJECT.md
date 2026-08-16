@@ -16,15 +16,15 @@
 ## Feature Inventory
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | Mobile Hamburger Button | Add accessible hamburger toggle button to navbar header for viewports < 768px | M1 | ORIGINAL_REQUEST §1 |
-| 2 | Mobile Slide-Out Drawer Markup | Implement drawer markup (`#mobileDrawer`, `#nav-backdrop`, close button, nav links, role actions) in `src/templates.ts` | M1 | ORIGINAL_REQUEST §1 |
-| 3 | Drawer CSS & Transitions | Smooth GPU-accelerated slide-out drawer (`transform: translateX(100%)` to `0`), backdrop blur, body scroll locking, touch targets >= 44px | M1 | ORIGINAL_REQUEST §1 |
-| 4 | Drawer Client JS Controller | Wire open/close, toggle, backdrop click, nav link click, Escape key, and window resize listeners in `main.js` | M1 | ORIGINAL_REQUEST §1 |
-| 5 | Desktop Navigation Preservation | Horizontal capsule navbar display for viewports >= 768px with unified header actions | M1 | ORIGINAL_REQUEST §1 |
-| 6 | Container Queries & Grid Modernization | Refactor `.section-container`, `.dashboard-grid`, `.services-grid`, `.gallery-list`, `.testimonials-grid`, `.blog-grid` using container queries and responsive minmax columns | M2 | ORIGINAL_REQUEST §2 |
-| 7 | Zero Horizontal Overflow (320px) | Eliminate fixed min-widths (`.about-col`, form inputs, grids, footers) to guarantee zero scrollbars on 320px+ viewports | M2 | ORIGINAL_REQUEST §2 |
-| 8 | Responsive Tables & Bento Styling | Add `.table-responsive` wrappers for data tables in Admin & Client Portal, and define missing `.bento-box` glass styles | M2 | ORIGINAL_REQUEST §2 |
-| 9 | Fluid Typography Scaling | Implement responsive font scaling using `clamp()` across hero titles, section headers, and dashboard headings without text clipping | M2 | ORIGINAL_REQUEST §2 |
+| 1 | Mobile Hamburger Button | Add accessible hamburger toggle button to navbar header for viewports < 768px | M1 (DONE) | ORIGINAL_REQUEST §1 |
+| 2 | Mobile Slide-Out Drawer Markup | Implement drawer markup (`#mobileDrawer`, `#navBackdrop`, close button, nav links, role actions) in `src/templates.ts` | M1 (DONE) | ORIGINAL_REQUEST §1 |
+| 3 | Drawer CSS & Transitions | Smooth GPU-accelerated slide-out drawer (`transform: translateX(100%)` to `0`), backdrop blur, body scroll locking, touch targets >= 44px | M1 (DONE) | ORIGINAL_REQUEST §1 |
+| 4 | Drawer Client JS Controller | Wire open/close, toggle, backdrop click, nav link click, Escape key, and window resize listeners in `main.js` | M1 (DONE) | ORIGINAL_REQUEST §1 |
+| 5 | Desktop Navigation Preservation | Horizontal capsule navbar display for viewports >= 768px with unified header actions | M1 (DONE) | ORIGINAL_REQUEST §1 |
+| 6 | Container Queries & Grid Modernization | Refactor `.section-container`, `.dashboard-grid`, `.services-grid`, `.gallery-list`, `.testimonials-grid`, `.blog-grid` using container queries and responsive minmax columns | M2 (DONE) | ORIGINAL_REQUEST §2 |
+| 7 | Zero Horizontal Overflow (320px) | Eliminate fixed min-widths (`.about-col`, form inputs, grids, footers) to guarantee zero scrollbars on 320px+ viewports | M2 (DONE) | ORIGINAL_REQUEST §2 |
+| 8 | Responsive Tables & Bento Styling | Add `.table-responsive` wrappers for data tables in Admin & Client Portal, and define missing `.bento-box` glass styles | M2 (DONE) | ORIGINAL_REQUEST §2 |
+| 9 | Fluid Typography Scaling | Implement responsive font scaling using `clamp()` across hero titles, section headers, and dashboard headings without text clipping | M2 (DONE) | ORIGINAL_REQUEST §2 |
 | 10 | Dark/Light Theme Preservation | Ensure drawer, backdrop, and all responsive components utilize CSS variables and switch cleanly without class conflict | M3 | ORIGINAL_REQUEST §3 |
 | 11 | GSAP & ScrollTrigger Compatibility | Verify ScrollTrigger animations work accurately across all viewports; trigger `ScrollTrigger.refresh()` on layout updates; fix in-page anchor links | M3 | ORIGINAL_REQUEST §3 |
 | 12 | End-to-End Responsive & Typecheck Validation | Validate all breakpoints (320px to 1440px), verify zero horizontal overflow, and ensure `npm run typecheck` passes with exit code 0 | M4 | ORIGINAL_REQUEST §4 |
@@ -32,9 +32,9 @@
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | Collapsible Slide-Out Mobile Navigation Drawer | Hamburger button, mobile drawer HTML/CSS/JS, smooth transitions, desktop >= 768px preservation | none | PLANNED |
-| M2 | Responsive Layouts & CSS Modernization | Container queries, flexbox/grid refactoring, 320px overflow elimination, table scrollers, bento styling | M1 | PLANNED |
-| M3 | Theme Switching & GSAP Animation Preservation | Dual theme support in drawer/components, ScrollTrigger lifecycle & refresh, in-page anchor link fixes | M1, M2 | PLANNED |
+| M1 | Collapsible Slide-Out Mobile Navigation Drawer | Hamburger button, mobile drawer HTML/CSS/JS, smooth transitions, desktop >= 768px preservation | none | DONE |
+| M2 | Responsive Layouts & CSS Modernization | Container queries, flexbox/grid refactoring, 320px overflow elimination, table scrollers, bento styling | M1 | DONE |
+| M3 | Theme Switching & GSAP Animation Preservation | Dual theme support in drawer/components, ScrollTrigger lifecycle & refresh, in-page anchor link fixes | M1, M2 | IN_PROGRESS |
 | M4 | Final Validation & Typecheck Verification | Full multi-viewport audit (320px to 1440px), zero overflow checks, `npm run typecheck` exit code 0 | M1, M2, M3 | PLANNED |
 
 ## Interface Contracts

@@ -508,7 +508,7 @@ export function adminMenuPage(
       }
       .admin-forms-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
         gap: 1.5rem;
       }
       .admin-form-card {
@@ -553,17 +553,11 @@ export function adminMenuPage(
           <h3 style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem;">Client Portal Creator</h3>
           <div class="admin-forms-grid">
             
-            <form action="/admin/client/create" method="POST" class="admin-form-card glass">
-              <h4 style="color: var(--accent-color); margin:0;">1. Create Client & Project</h4>
-              <input type="email" name="email" placeholder="Client Email" required class="form-input">
-              <input type="password" name="password" placeholder="Client Temp Password" required class="form-input">
-              <input type="text" name="project_title" placeholder="Project Title (e.g. Acme Website)" required class="form-input">
-              <textarea name="project_description" placeholder="Project Description" class="form-textarea" style="height:70px;"></textarea>
-              <input type="url" name="figma_link" placeholder="Figma Link (Optional)" class="form-input">
-              <input type="url" name="staging_link" placeholder="Staging Link (Optional)" class="form-input">
-              <input type="url" name="production_link" placeholder="Production Link (Optional)" class="form-input">
-              <button type="submit" class="btn">Create Client & Project</button>
-            </form>
+            <div class="admin-form-card glass" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding: 2rem;">
+              <h4 style="color: var(--accent-color); margin-bottom: 1rem;">1. Clients Proposal Reviewer</h4>
+              <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Review and approve incoming client project proposals to automatically create their projects.</p>
+              <a href="/admin/proposals" class="btn">Open Proposals Reviewer</a>
+            </div>
 
             <form action="/admin/milestone/create" method="POST" class="admin-form-card glass">
               <h4 style="color: var(--accent-color); margin:0;">2. Add Milestone</h4>
@@ -622,18 +616,20 @@ export function adminMenuPage(
         <div class="dashboard-grid">
           <section class="dashboard-col glass" style="border-radius:12px;">
             <h3>Registered System Users</h3>
-            <table class="users-table">
-              <thead>
-                <tr>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${usersHtml}
-              </tbody>
-            </table>
+            <div class="table-responsive">
+              <table class="users-table">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${usersHtml}
+                </tbody>
+              </table>
+            </div>
           </section>
 
           <section class="dashboard-col glass" style="border-radius:12px;">
@@ -647,7 +643,7 @@ export function adminMenuPage(
         <div class="admin-sections-manager" style="margin-top: 2rem; grid-column: 1/-1;">
           <h3 style="border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem; margin-bottom: 1.5rem; font-weight:700;">Website Sections & Content Manager</h3>
           
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: start;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 2rem; align-items: start;">
             
             <!-- 1. Manage About -->
             <form action="/admin/about/update" method="POST" class="admin-form-card glass" style="padding: 1.5rem; border-radius: 12px; gap: 1rem;">
@@ -765,34 +761,38 @@ export function adminDataPage(blogPosts: any[], siteConfig: any[]): string {
       <div class="dashboard-grid">
         <section class="dashboard-col glass" style="flex: 2; border-radius:12px;">
           <h3>Content (Projects & Blog Posts)</h3>
-          <table class="users-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Slug</th>
-                <th>Status</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${blogsHtml.length ? blogsHtml : '<tr><td colspan="4" class="text-center text-secondary">No content entries found.</td></tr>'}
-            </tbody>
-          </table>
+          <div class="table-responsive">
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Slug</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${blogsHtml.length ? blogsHtml : '<tr><td colspan="4" class="text-center text-secondary">No content entries found.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section class="dashboard-col glass" style="flex: 1; border-radius:12px;">
           <h3>Site Metadata</h3>
-          <table class="users-table">
-            <thead>
-              <tr>
-                <th>Key</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${configHtml.length ? configHtml : '<tr><td colspan="2" class="text-center text-secondary">No metadata found.</td></tr>'}
-            </tbody>
-          </table>
+          <div class="table-responsive">
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>Key</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${configHtml.length ? configHtml : '<tr><td colspan="2" class="text-center text-secondary">No metadata found.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
         </section>
       </div>
     </div>
@@ -902,10 +902,11 @@ export function clientDashboardPage(data: {
         gap: 1rem;
       }
       .client-welcome h1 {
-        font-size: 2.5rem;
+        font-size: clamp(1.75rem, 4vw, 2.5rem);
         font-weight: 800;
         margin-bottom: 0.5rem;
         letter-spacing: -0.02em;
+        overflow-wrap: break-word;
       }
       .status-badge {
         display: inline-block;
@@ -934,7 +935,7 @@ export function clientDashboardPage(data: {
       
       .resources-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
         gap: 1.5rem;
       }
       .resource-card {
@@ -1062,7 +1063,7 @@ export function clientDashboardPage(data: {
 
       .asset-list {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
         gap: 1.5rem;
         margin-top: 1.5rem;
       }
@@ -1078,7 +1079,7 @@ export function clientDashboardPage(data: {
       .dashboard-grid-two {
         display: grid;
         grid-template-columns: 2fr 1fr;
-        gap: 2rem;
+        gap: clamp(1rem, 2.5cqi, 2rem);
       }
       @media (max-width: 900px) {
         .dashboard-grid-two {
@@ -1152,21 +1153,23 @@ export function clientDashboardPage(data: {
 
           <section class="dashboard-section">
             <h2>Billing & Invoices</h2>
-            <div class="glass" style="padding:1.5rem; border-radius:12px; overflow-x:auto;">
-              <table class="invoices-table">
-                <thead>
-                  <tr>
-                    <th>Invoice #</th>
-                    <th>Amount</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${invoicesHtml}
-                </tbody>
-              </table>
+            <div class="glass" style="padding:1.5rem; border-radius:12px;">
+              <div class="table-responsive">
+                <table class="invoices-table">
+                  <thead>
+                    <tr>
+                      <th>Invoice #</th>
+                      <th>Amount</th>
+                      <th>Due Date</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${invoicesHtml}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
         </div>
@@ -1223,7 +1226,7 @@ export function proposalRequestPage(): string {
   const content = `
     <div class="section-container" style="padding-top:120px;">
       <div class="bento-box">
-        <h1 style="margin-bottom:1rem; font-size:2rem; letter-spacing:-0.03em;">Request a Project</h1>
+        <h1 style="margin-bottom:1rem; font-size:clamp(1.5rem, 4vw, 2rem); letter-spacing:-0.03em; overflow-wrap:break-word;">Request a Project</h1>
         <p style="color:var(--text-secondary); margin-bottom:2rem;">Fill out the details below to submit a proposal. We will review it and get back to you shortly.</p>
         <form action="/api/proposals" method="POST" class="contact-form">
           <input type="text" name="title" placeholder="Project Title" required class="form-input">
@@ -1243,8 +1246,8 @@ export function proposalListPage(proposals: any[], role: 'admin' | 'user'): stri
   const proposalsHtml = proposals.length > 0 
     ? proposals.map(p => `
       <div class="bento-box" style="margin-bottom:1rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-          <h3 style="margin:0;">${p.title}</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap; gap:0.5rem;">
+          <h3 style="margin:0; overflow-wrap:break-word;">${p.title}</h3>
           <span style="padding:4px 8px; border-radius:4px; font-size:0.8rem; background:var(--bg-card); border:1px solid var(--border-glass);">
             ${p.status.toUpperCase()}
           </span>
@@ -1252,15 +1255,15 @@ export function proposalListPage(proposals: any[], role: 'admin' | 'user'): stri
         <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1rem;">
           Budget: $${p.budget || 'N/A'} | Created: ${new Date(p.created_at).toLocaleDateString()}
         </p>
-        <a href="${role === 'admin' ? '/admin' : '/client'}/proposals/${p.id}" class="btn" style="display:inline-block; font-size:0.85rem; padding:6px 12px;">View Details</a>
+        <a href="${role === 'admin' ? '/admin' : '/client'}/proposals/${p.id}" class="btn" style="display:inline-flex; font-size:0.85rem; padding:6px 12px; min-height:36px;">View Details</a>
       </div>
     `).join('')
     : '<p style="color:var(--text-secondary);">No proposals found.</p>';
 
   const content = `
     <div class="section-container" style="padding-top:120px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
-        <h1 style="font-size:2rem; letter-spacing:-0.03em;">Project Proposals</h1>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; flex-wrap:wrap; gap:1rem;">
+        <h1 style="font-size:clamp(1.5rem, 4vw, 2rem); letter-spacing:-0.03em; overflow-wrap:break-word;">Project Proposals</h1>
         ${role === 'user' ? `<a href="/client/proposals/new" class="btn">Request Project</a>` : ''}
       </div>
       <div style="display:grid; gap:1rem;">
@@ -1274,7 +1277,7 @@ export function proposalListPage(proposals: any[], role: 'admin' | 'user'): stri
 export function proposalDetailsPage(proposal: any, comments: any[], role: 'admin' | 'user'): string {
   const commentsHtml = comments.length > 0
     ? comments.map(c => `
-      <div style="margin-bottom:1rem; padding:1rem; background:var(--bg-card); border-radius:8px; border:1px solid var(--border-glass);">
+      <div style="margin-bottom:1rem; padding:1rem; background:var(--bg-card); border-radius:8px; border:1px solid var(--border-glass); overflow-wrap:break-word;">
         <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.5rem;">
           <strong>User ID: ${c.user_id}</strong> on ${new Date(c.created_at).toLocaleString()}
         </div>
@@ -1296,13 +1299,13 @@ export function proposalDetailsPage(proposal: any, comments: any[], role: 'admin
     <div class="section-container" style="padding-top:120px;">
       <a href="${role === 'admin' ? '/admin' : '/client'}/proposals" style="color:var(--text-secondary); text-decoration:none; display:inline-block; margin-bottom:1rem;">&larr; Back to Proposals</a>
       <div class="bento-box" style="margin-bottom:2rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-          <h1 style="font-size:2rem; margin:0;">${proposal.title}</h1>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+          <h1 style="font-size:clamp(1.5rem, 4vw, 2rem); margin:0; overflow-wrap:break-word;">${proposal.title}</h1>
           <span style="padding:4px 8px; border-radius:4px; font-size:0.8rem; background:var(--bg-card); border:1px solid var(--border-glass);">
             STATUS: ${proposal.status.toUpperCase()}
           </span>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap:1rem; margin-bottom:1.5rem;">
           <div>
             <strong>Budget:</strong> $${proposal.budget || 'N/A'}
           </div>
@@ -1312,21 +1315,21 @@ export function proposalDetailsPage(proposal: any, comments: any[], role: 'admin
         </div>
         <div style="margin-bottom:1.5rem;">
           <strong>Description:</strong>
-          <p style="color:var(--text-secondary); white-space:pre-wrap;">${proposal.content_description}</p>
+          <p style="color:var(--text-secondary); white-space:pre-wrap; overflow-wrap:break-word;">${proposal.content_description}</p>
         </div>
         <div style="margin-bottom:1.5rem;">
           <strong>Tech Requirements:</strong>
-          <p style="color:var(--text-secondary); white-space:pre-wrap;">${proposal.tech_requirements || 'None'}</p>
+          <p style="color:var(--text-secondary); white-space:pre-wrap; overflow-wrap:break-word;">${proposal.tech_requirements || 'None'}</p>
         </div>
         <div style="margin-bottom:1.5rem;">
           <strong>Design Requirements:</strong>
-          <p style="color:var(--text-secondary); white-space:pre-wrap;">${proposal.design_requirements || 'None'}</p>
+          <p style="color:var(--text-secondary); white-space:pre-wrap; overflow-wrap:break-word;">${proposal.design_requirements || 'None'}</p>
         </div>
         ${actionForm}
       </div>
 
       <div class="bento-box">
-        <h2 style="font-size:1.5rem; margin-bottom:1rem;">Negotiation / Comments</h2>
+        <h2 style="font-size:clamp(1.25rem, 3vw, 1.5rem); margin-bottom:1rem;">Negotiation / Comments</h2>
         <div style="margin-bottom:1.5rem;">
           ${commentsHtml}
         </div>
