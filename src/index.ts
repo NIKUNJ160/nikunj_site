@@ -690,6 +690,12 @@ app.get('/client/dashboard', userAuthMiddleware, async (c) => {
 
       const { data: asts } = await supabase.from('client_assets').select('*').eq('client_id', user.id).order('created_at', { ascending: false });
       assets = asts || [];
+    } else {
+      // If no project, check if they have any proposals. If not, auto-redirect to setup.
+      const { data: proposals } = await supabase.from('project_proposals').select('id').eq('client_id', user.id).limit(1);
+      if (!proposals || proposals.length === 0) {
+        return c.redirect('/client/proposals/new');
+      }
     }
 
     return c.html(clientDashboardPage({

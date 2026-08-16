@@ -1,11 +1,20 @@
 export function layout(title: string, content: string, description: string = "Portfolio of Nikunj Pateliya", role?: 'admin' | 'user'): string {
   let roleHtml = '';
+  let drawerRoleHtml = '';
   if (role === 'admin') {
     roleHtml = `
       <li><a class="nav-link" href="/admin/menu">Admin Panel</a></li>
       <li>
         <form action="/admin/logout" method="POST" style="display:inline; margin:0; padding:0;">
           <button type="submit" class="nav-link-btn" style="background:none; border:1px solid var(--border-glass); color:var(--text-primary); cursor:pointer; font-weight:600; font-size:0.85rem; padding:6px 16px; border-radius:99px;">Logout</button>
+        </form>
+      </li>
+    `;
+    drawerRoleHtml = `
+      <li><a class="drawer-link" href="/admin/menu">Admin Panel</a></li>
+      <li>
+        <form action="/admin/logout" method="POST" style="margin:0; padding:0;">
+          <button type="submit" class="drawer-link drawer-btn-logout" style="width:100%; text-align:left; background:none; border:1px solid var(--border-glass); color:var(--text-primary); cursor:pointer; font-weight:600; font-size:1rem; padding:12px 16px; border-radius:12px;">Logout</button>
         </form>
       </li>
     `;
@@ -18,8 +27,17 @@ export function layout(title: string, content: string, description: string = "Po
         </form>
       </li>
     `;
+    drawerRoleHtml = `
+      <li><a class="drawer-link" href="/client/dashboard">My Portal</a></li>
+      <li>
+        <form action="/user/logout" method="POST" style="margin:0; padding:0;">
+          <button type="submit" class="drawer-link drawer-btn-logout" style="width:100%; text-align:left; background:none; border:1px solid var(--border-glass); color:var(--text-primary); cursor:pointer; font-weight:600; font-size:1rem; padding:12px 16px; border-radius:12px;">Logout</button>
+        </form>
+      </li>
+    `;
   } else {
     roleHtml = `<li><a class="nav-link-btn" href="/user/login">Client Portal</a></li>`;
+    drawerRoleHtml = `<li><a class="drawer-link drawer-link-btn" href="/user/login">Client Portal</a></li>`;
   }
 
   return `<!DOCTYPE html>
@@ -54,12 +72,39 @@ export function layout(title: string, content: string, description: string = "Po
         <li><a class="nav-link" href="/user/login">Contact</a></li>
         ${roleHtml}
       </ul>
+      <div class="nav-actions">
+        <button id="theme-toggle" class="btn-theme" aria-label="Toggle visual theme">Theme</button>
+        <button id="navToggle" class="nav-toggle-btn" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobileDrawer">
+          <span class="hamburger-icon">
+            <span class="hamburger-bar"></span>
+            <span class="hamburger-bar"></span>
+            <span class="hamburger-bar"></span>
+          </span>
+        </button>
+      </div>
     </div>
   </nav>
 
-  <div class="theme-toggle-container">
-    <button id="theme-toggle" class="btn-theme" aria-label="Toggle visual theme">Theme</button>
-  </div>
+  <div id="navBackdrop" class="nav-drawer-backdrop"></div>
+  <aside id="mobileDrawer" class="nav-drawer" aria-hidden="true">
+    <div class="drawer-header">
+      <a class="nav-brand" href="/">Nikunj.P</a>
+      <button id="drawerClose" class="drawer-close-btn" aria-label="Close navigation menu">&times;</button>
+    </div>
+    <ul class="drawer-menu">
+      <li><a class="drawer-link" href="/#home">Home</a></li>
+      <li><a class="drawer-link" href="/#about">About</a></li>
+      <li><a class="drawer-link" href="/#services">Services</a></li>
+      <li><a class="drawer-link" href="/#portfolio">Projects Done</a></li>
+      <li><a class="drawer-link" href="/#testimonials">Testimonials</a></li>
+      <li><a class="drawer-link" href="/#blog">Blog</a></li>
+      <li><a class="drawer-link" href="/user/login">Contact</a></li>
+      ${drawerRoleHtml}
+    </ul>
+    <div class="drawer-footer">
+      <button id="drawer-theme-toggle" class="btn-theme drawer-theme-btn" aria-label="Toggle visual theme">Theme</button>
+    </div>
+  </aside>
   
   <main id="main-scroll-container" data-scroll-container>
     ${content}
