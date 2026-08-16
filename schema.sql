@@ -144,3 +144,26 @@ VALUES
 ('about_profile_image', '/assets/images/uploads/about.jpeg'),
 ('about_cv_url', '/assets/Nikunjkumar_Pateliya_CV.pdf')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+
+-- Testimonials Table
+CREATE TABLE IF NOT EXISTS testimonials (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL,
+    text TEXT NOT NULL,
+    img TEXT NOT NULL DEFAULT '/assets/images/uploads/testi_01.png',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seed default testimonials safely
+INSERT INTO testimonials (name, role, text, img)
+SELECT 'James Fernando', 'Manager of Racer', 'Wonderful Support! They delivered our project on time with an incredibly skilled, professional team.', '/assets/images/uploads/testi_01.png'
+WHERE NOT EXISTS (SELECT 1 FROM testimonials WHERE name = 'James Fernando');
+
+INSERT INTO testimonials (name, role, text, img)
+SELECT 'Jacques Philips', 'Designer', 'Awesome Services! Their attention to page speed and custom styling exceeds standard templates.', '/assets/images/uploads/testi_02.png'
+WHERE NOT EXISTS (SELECT 1 FROM testimonials WHERE name = 'Jacques Philips');
+
+INSERT INTO testimonials (name, role, text, img)
+SELECT 'Venanda Mercy', 'New York City', 'Great & Talented Team! Clean layouts, high performance, and smooth animations. Highly recommended.', '/assets/images/uploads/testi_03.png'
+WHERE NOT EXISTS (SELECT 1 FROM testimonials WHERE name = 'Venanda Mercy');

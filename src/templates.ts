@@ -119,7 +119,7 @@ export function layout(title: string, content: string, description: string = "Po
 </html>`;
 }
 
-export function homePage(data: { projects: any[]; skills: any[]; services: any[]; blogPosts: any[] }, role?: 'admin' | 'user'): string {
+export function homePage(data: { projects: any[]; skills: any[]; services: any[]; blogPosts: any[]; testimonials?: any[] }, role?: 'admin' | 'user'): string {
   // Built-in SVG Icons for services to keep pages extremely fast (YAGNI/ponytail: zero resource file loading)
   const icons = {
     web: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
@@ -170,11 +170,13 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
     </div>
   `).join('');
 
-  const testimonials = [
-    { name: 'James Fernando', role: 'Manager of Racer', text: 'Wonderful Support! They delivered our project on time with an incredibly skilled, professional team.', img: '/assets/images/uploads/testi_01.png' },
-    { name: 'Jacques Philips', role: 'Designer', text: 'Awesome Services! Their attention to page speed and custom styling exceeds standard templates.', img: '/assets/images/uploads/testi_02.png' },
-    { name: 'Venanda Mercy', role: 'New York City', text: 'Great & Talented Team! Clean layouts, high performance, and smooth animations. Highly recommended.', img: '/assets/images/uploads/testi_03.png' }
-  ];
+  const testimonials = (data.testimonials && data.testimonials.length > 0)
+    ? data.testimonials
+    : [
+      { name: 'James Fernando', role: 'Manager of Racer', text: 'Wonderful Support! They delivered our project on time with an incredibly skilled, professional team.', img: '/assets/images/uploads/testi_01.png' },
+      { name: 'Jacques Philips', role: 'Designer', text: 'Awesome Services! Their attention to page speed and custom styling exceeds standard templates.', img: '/assets/images/uploads/testi_02.png' },
+      { name: 'Venanda Mercy', role: 'New York City', text: 'Great & Talented Team! Clean layouts, high performance, and smooth animations. Highly recommended.', img: '/assets/images/uploads/testi_03.png' }
+    ];
 
   const testimonialsHtml = testimonials.map(t => `
     <div class="glass testimonial-card" data-scroll>
@@ -371,6 +373,7 @@ export function adminMenuPage(
     allProjects?: any[];
     allBlogs?: any[];
     allServices?: any[];
+    allTestimonials?: any[];
     metadata?: any;
   }
 ): string {
@@ -442,8 +445,25 @@ export function adminMenuPage(
     </div>
   `).join('');
 
-  const allProjects = extra?.allProjects || [];
+  const allTestimonials = extra?.allTestimonials || [];
+
+  const testimonialsListHtml = allTestimonials.map(t => `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 6px; gap: 1rem; margin-bottom: 0.5rem;">
+      <div style="flex: 1; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <strong>${t.name}</strong>
+        <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">${t.role}</span>
+        <span style="font-size: 0.75rem; color: var(--text-secondary); display: block; overflow: hidden; text-overflow: ellipsis;">"${t.text}"</span>
+      </div>
+      <form action="/admin/testimonial/delete" method="POST" style="margin:0; flex-shrink:0;">
+        <input type="hidden" name="id" value="${t.id}">
+        <button type="submit" class="btn-delete" style="padding: 3px 6px; font-size: 0.7rem;" onclick="return confirm('Delete testimonial from ${t.name}?')">Delete</button>
+      </form>
+    </div>
+  `).join('');
+
+
   const allBlogs = extra?.allBlogs || [];
+  const allProjects = extra?.allProjects || [];
   const allServices = extra?.allServices || [];
   const metadata = extra?.metadata || {};
 
@@ -717,6 +737,22 @@ export function adminMenuPage(
               <div style="border-top:1px solid var(--border-glass); padding-top:1rem; max-height:220px; overflow-y:auto;">
                 <h5 style="margin-top:0; margin-bottom:0.75rem;">Published Articles:</h5>
                 ${blogsListHtml.length ? blogsListHtml : '<p class="text-secondary">No blog articles published.</p>'}
+              </div>
+            </div>
+
+            <!-- 5. Feedback / Testimonials -->
+            <div class="glass" style="padding: 1.5rem; border-radius: 12px;">
+              <h4 style="color: var(--accent-color); margin: 0 0 1rem 0; font-weight:700;">Feedback &amp; Testimonials</h4>
+              <form action="/admin/testimonial/create" method="POST" class="admin-form-card" style="padding:0; background:none; border:none; box-shadow:none; gap:0.8rem; margin-bottom:1.5rem;">
+                <input type="text" name="name" placeholder="Client Name" required class="form-input">
+                <input type="text" name="role" placeholder="Role / Location (e.g. Designer, Mumbai)" required class="form-input">
+                <textarea name="text" placeholder="Testimonial / Feedback text..." class="form-textarea" style="height:70px;" required></textarea>
+                <input type="text" name="img" placeholder="Avatar image path (leave blank for default)" class="form-input">
+                <button type="submit" class="btn">Add Testimonial</button>
+              </form>
+              <div style="border-top:1px solid var(--border-glass); padding-top:1rem; max-height:280px; overflow-y:auto;">
+                <h5 style="margin-top:0; margin-bottom:0.75rem;">Active Testimonials:</h5>
+                ${testimonialsListHtml.length ? testimonialsListHtml : '<p class="text-secondary">No testimonials added yet.</p>'}
               </div>
             </div>
 

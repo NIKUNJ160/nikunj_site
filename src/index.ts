@@ -60,6 +60,7 @@ async function fetchPortfolioData(supabase: SupabaseClient) {
     const { data: projects } = await supabase.from('blog_posts').select('*').eq('is_published', 0).order('id', { ascending: false });
     const { data: blogPosts } = await supabase.from('blog_posts').select('*').eq('is_published', 1).order('created_at', { ascending: false });
     const { data: dbServices } = await supabase.from('services').select('*').order('created_at', { ascending: true });
+    const { data: dbTestimonials } = await supabase.from('testimonials').select('*').order('created_at', { ascending: false });
     const { data: meta } = await supabase.from('site_metadata').select('*');
 
     const skills = [
@@ -89,9 +90,9 @@ async function fetchPortfolioData(supabase: SupabaseClient) {
       ];
     }
 
-    return { projects: projects || [], skills, services, blogPosts: blogPosts || [], metadata };
+    return { projects: projects || [], skills, services, blogPosts: blogPosts || [], metadata, testimonials: dbTestimonials || [] };
   } catch {
-    return { projects: [], skills: [], services: [], blogPosts: [], metadata: {} };
+    return { projects: [], skills: [], services: [], blogPosts: [], metadata: {}, testimonials: [] };
   }
 }
 
@@ -345,6 +346,7 @@ app.get('/admin/menu', adminAuthMiddleware, async (c) => {
     const { data: allProjects } = await supabase.from('blog_posts').select('*').eq('is_published', 0).order('id', { ascending: false });
     const { data: allBlogs } = await supabase.from('blog_posts').select('*').eq('is_published', 1).order('created_at', { ascending: false });
     const { data: allServices } = await supabase.from('services').select('*').order('created_at', { ascending: true });
+    const { data: allTestimonials } = await supabase.from('testimonials').select('*').order('created_at', { ascending: false });
     const { data: meta } = await supabase.from('site_metadata').select('*');
 
     const metadata: Record<string, string> = {};
@@ -365,6 +367,7 @@ app.get('/admin/menu', adminAuthMiddleware, async (c) => {
         allProjects: allProjects || [],
         allBlogs: allBlogs || [],
         allServices: allServices || [],
+        allTestimonials: allTestimonials || [],
         metadata
       }
     ));
@@ -614,6 +617,37 @@ app.post('/admin/content/delete', adminAuthMiddleware, async (c) => {
     const { error } = await supabase.from('blog_posts').delete().eq('id', id);
     if (error) throw new Error(error.message);
     return c.redirect('/admin/menu?success=Content entry deleted successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/testimonial/create', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const name = body.name as string;
+  const role = body.role as string;
+  const text = body.text as string;
+  const img = (body.img as string) || '/assets/images/uploads/testi_01.png';
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('testimonials').insert({ name, role, text, img });
+    if (error) throw new Error(error.message);
+    return c.redirect('/admin/menu?success=Feedback testimonial added successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/testimonial/delete', adminAuthMiddleware, async (c) => {
+  const body = await c.req.parseBody();
+  const id = parseInt(body.id as string);
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('testimonials').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return c.redirect('/admin/menu?success=Feedback testimonial deleted successfully.');
   } catch (err: any) {
     return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
   }
