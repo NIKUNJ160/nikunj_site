@@ -36,8 +36,8 @@ export function layout(title: string, content: string, description: string = "Po
       </li>
     `;
   } else {
-    roleHtml = `<li><a class="nav-link-btn" href="/user/login">Client Portal</a></li>`;
-    drawerRoleHtml = `<li><a class="drawer-link drawer-link-btn" href="/user/login">Client Portal</a></li>`;
+    roleHtml = `<li><a class="nav-link-btn" href="/user/login">Clients</a></li>`;
+    drawerRoleHtml = `<li><a class="drawer-link drawer-link-btn" href="/user/login">Clients</a></li>`;
   }
 
   return `<!DOCTYPE html>
@@ -66,7 +66,7 @@ export function layout(title: string, content: string, description: string = "Po
         <li><a class="nav-link" href="/#home">Home</a></li>
         <li><a class="nav-link" href="/#about">About</a></li>
         <li><a class="nav-link" href="/#services">Services</a></li>
-        <li><a class="nav-link" href="/#portfolio">Projects Done</a></li>
+        <li><a class="nav-link" href="/#portfolio">Projects</a></li>
         <li><a class="nav-link" href="/#testimonials">Testimonials</a></li>
         <li><a class="nav-link" href="/#blog">Blog</a></li>
         <li><a class="nav-link" href="/user/login">Contact</a></li>
@@ -95,7 +95,7 @@ export function layout(title: string, content: string, description: string = "Po
       <li><a class="drawer-link" href="/#home">Home</a></li>
       <li><a class="drawer-link" href="/#about">About</a></li>
       <li><a class="drawer-link" href="/#services">Services</a></li>
-      <li><a class="drawer-link" href="/#portfolio">Projects Done</a></li>
+      <li><a class="drawer-link" href="/#portfolio">Projects</a></li>
       <li><a class="drawer-link" href="/#testimonials">Testimonials</a></li>
       <li><a class="drawer-link" href="/#blog">Blog</a></li>
       <li><a class="drawer-link" href="/user/login">Contact</a></li>
