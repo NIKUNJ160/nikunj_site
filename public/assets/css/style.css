@@ -1007,8 +1007,15 @@ body.drawer-open {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  gap: 24px;
+}
+
+.footer-top-row {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .footer-links {
