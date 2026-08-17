@@ -340,7 +340,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
             </a>
           </div>
         </div>
-        <p class="footer-copyright">&copy; 2026 Nikunj Pateliya. All Rights Reserved.</p>
+        <p class="footer-copyright">&copy; 2024 Nikunj Pateliya. All Rights Reserved.</p>
       </div>
     </footer>
   `;
