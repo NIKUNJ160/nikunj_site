@@ -232,8 +232,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
         <div class="about-col text-col" data-scroll>
           <span class="section-tag">INTRODUCTION</span>
           <h2 class="section-heading">About Nikunj Pateliya</h2>
-          <p>I am a Gujarat-based Web Designer and Full-Stack Developer specializing in high-performance edge computing architectures, responsive styling, and modular layouts.</p>
-          <p>By leveraging Cloudflare Workers, Hono, and D1 SQLite databases, I construct dynamic applications that run near-instantly at the edge, bypassing bulk frameworks and heavy client dependencies.</p>
+          <p>Hi, I’m Nikunj Pateliya — a freelance web developer, Android creator, and website tester. I build and fine-tune high-performance digital products from the ground up, combining solid code architecture, precise quality testing, and modern UI design.</p>
           <a href="/assets/Nikunjkumar_Pateliya_CV.pdf" class="btn" style="margin-top: 1.5rem;" target="_blank" download>Download CV</a>
         </div>
         <div class="about-col image-col" data-scroll>
