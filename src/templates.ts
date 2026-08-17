@@ -334,9 +334,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
           <a href="https://www.linkedin.com/in/nikunjpateliya1608" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="LinkedIn">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM3.56 20.45h3.56V9H3.56v11.45zM22.22 0H1.78C.8 0 0 .78 0 1.74v20.52C0 23.22.8 24 1.78 24h20.44C23.2 24 24 23.22 24 22.26V1.74C24 .78 23.2 0 22.22 0z"/></svg>
           </a>
-          <a href="https://wa.me/919328801435" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="WhatsApp">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.79-1.68-2.09-.17-.3-.02-.46.13-.61.14-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.68-1.63-.93-2.23-.24-.58-.49-.5-.68-.51l-.58-.01c-.2 0-.52.07-.79.37-.27.3-1.03 1.01-1.03 2.46s1.05 2.85 1.2 3.05c.15.2 2.07 3.16 5.01 4.43.7.3 1.25.48 1.67.62.7.22 1.34.19 1.84.12.56-.08 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.13-.27-.2-.57-.35zM12 21.7A9.7 9.7 0 0 1 5.14 5.14 9.7 9.7 0 1 1 12 21.7zm0-21.7C5.37 0 0 5.37 0 12c0 2.12.55 4.1 1.52 5.82L0 24l6.35-1.49A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12S18.63 0 12 0z"/></svg>
-          </a>
+          
         </div>
         <p class="footer-copyright">&copy; ${new Date().getFullYear()} Nikunj Pateliya. All Rights Reserved.</p>
       </div>
@@ -349,7 +347,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
 export function loginPage(role: 'admin' | 'user', error?: string): string {
   const title = role === 'admin' ? 'Admin Portal' : 'Client Login';
   const action = role === 'admin' ? '/admin/login' : '/user/login';
-  
+
   const content = `
     <section class="auth-section">
       <div class="glass auth-card">
@@ -477,9 +475,9 @@ export function blogDetailPage(post: any): string {
 }
 
 export function adminMenuPage(
-  users: any[], 
-  messages: any[], 
-  projects: any[] = [], 
+  users: any[],
+  messages: any[],
+  projects: any[] = [],
   clientAssets: any[] = [],
   error?: string,
   success?: string,
@@ -929,7 +927,7 @@ export function adminClientDetailPage(data: {
             <span style="font-size:0.68rem; font-weight:700; padding:2px 10px; border-radius:99px; background:${msStatusColor[m.status] || '#6B7280'}20; color:${msStatusColor[m.status] || '#6B7280'}; border:1px solid ${msStatusColor[m.status] || '#6B7280'}40;">${m.status.replace('_', ' ')}</span>
           </div>
           ${m.description ? `<p style="font-size:0.85rem; color:var(--text-secondary); margin:0 0 0.25rem 0;">${m.description}</p>` : ''}
-          ${m.due_date ? `<small style="color:var(--text-secondary);">Due: ${new Date(m.due_date).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}</small>` : ''}
+          ${m.due_date ? `<small style="color:var(--text-secondary);">Due: ${new Date(m.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</small>` : ''}
         </div>
       </div>
     `).join('')
@@ -977,7 +975,7 @@ export function adminClientDetailPage(data: {
               <tr>
                 <td style="font-family:monospace; font-weight:600;">${inv.invoice_number}</td>
                 <td style="font-weight:700;">Rs.${parseFloat(inv.amount).toLocaleString('en-IN')}</td>
-                <td>${inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '-'}</td>
+                <td>${inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</td>
                 <td><span style="font-size:0.68rem; font-weight:700; padding:3px 10px; border-radius:99px; background:${invStatusColor[inv.status] || '#6B7280'}20; color:${invStatusColor[inv.status] || '#6B7280'}; border:1px solid ${invStatusColor[inv.status] || '#6B7280'}40;">${inv.status}</span></td>
                 <td>${inv.payment_url ? `<a href="${inv.payment_url}" target="_blank" style="color:var(--accent-color); font-size:0.8rem; font-weight:600;">Pay Link</a>` : '-'}</td>
               </tr>
@@ -1011,7 +1009,7 @@ export function adminClientDetailPage(data: {
         <div style="flex:1; min-width:0;">
           <a href="${a.file_url}" target="_blank" download style="color:var(--accent-color); font-weight:600; font-size:0.875rem; word-break:break-all;">${a.file_name}</a>
           ${a.description ? `<p style="font-size:0.78rem; color:var(--text-secondary); margin:2px 0 0 0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${a.description}</p>` : ''}
-          <small style="font-size:0.7rem; color:var(--text-secondary);">${new Date(a.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}</small>
+          <small style="font-size:0.7rem; color:var(--text-secondary);">${new Date(a.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</small>
         </div>
         <span style="flex-shrink:0; font-size:0.65rem; font-weight:700; padding:3px 8px; border-radius:99px; background:${categoryColors[a.category] || '#6B7280'}20; color:${categoryColors[a.category] || '#6B7280'}; border:1px solid ${categoryColors[a.category] || '#6B7280'}40;">${a.category}</span>
       </div>
@@ -1044,7 +1042,7 @@ export function adminClientDetailPage(data: {
         <span style="font-size:0.78rem; font-weight:700; padding:6px 18px; border-radius:99px; background:${statusColor}20; color:${statusColor}; border:1px solid ${statusColor}40; text-transform:capitalize;">${project.status}</span>
       </div>
 
-      ${error   ? `<div class="alert-banner alert-error">&#9888; ${error}</div>`   : ''}
+      ${error ? `<div class="alert-banner alert-error">&#9888; ${error}</div>` : ''}
       ${success ? `<div class="alert-banner alert-success">&#10003; ${success}</div>` : ''}
 
       <!-- Project Settings -->
@@ -1055,9 +1053,9 @@ export function adminClientDetailPage(data: {
             <div>
               <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-secondary);">Project Status</label>
               <select name="status" class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border-glass);">
-                ${['onboarding','wireframing','development','testing','completed'].map(s =>
-                  `<option value="${s}" ${project.status === s ? 'selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
-                ).join('')}
+                ${['onboarding', 'wireframing', 'development', 'testing', 'completed'].map(s =>
+    `<option value="${s}" ${project.status === s ? 'selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
+  ).join('')}
               </select>
             </div>
             <div>
@@ -1257,17 +1255,17 @@ export function clientDashboardPage(data: {
 
   const milestonesHtml = milestones.length
     ? milestones.map(m => {
-        let statusClass = 'pending';
-        let statusLabel = 'Pending';
-        if (m.status === 'completed') {
-          statusClass = 'completed';
-          statusLabel = 'Completed';
-        } else if (m.status === 'in_progress') {
-          statusClass = 'in_progress';
-          statusLabel = 'In Progress';
-        }
+      let statusClass = 'pending';
+      let statusLabel = 'Pending';
+      if (m.status === 'completed') {
+        statusClass = 'completed';
+        statusLabel = 'Completed';
+      } else if (m.status === 'in_progress') {
+        statusClass = 'in_progress';
+        statusLabel = 'In Progress';
+      }
 
-        return `
+      return `
           <div class="timeline-item ${statusClass}">
             <div class="timeline-content">
               <div class="timeline-header">
@@ -1279,28 +1277,28 @@ export function clientDashboardPage(data: {
             </div>
           </div>
         `;
-      }).join('')
+    }).join('')
     : '<p class="text-secondary">No project milestones scheduled yet.</p>';
 
   const invoicesHtml = invoices.length
     ? invoices.map(i => {
-        let statusLabel = i.status.toUpperCase();
-        let statusClass = `invoice-${i.status}`;
+      let statusLabel = i.status.toUpperCase();
+      let statusClass = `invoice-${i.status}`;
 
-        return `
+      return `
           <tr>
             <td><strong>${i.invoice_number}</strong></td>
             <td>$${parseFloat(i.amount).toFixed(2)}</td>
             <td>${i.due_date ? new Date(i.due_date).toLocaleDateString() : 'N/A'}</td>
             <td><span class="invoice-status ${statusClass}">${statusLabel}</span></td>
             <td>
-              ${i.status !== 'paid' && i.payment_url 
-                ? `<a href="${i.payment_url}" target="_blank" class="btn" style="padding: 4px 12px; font-size: 0.8rem;">Pay Invoice</a>`
-                : i.status === 'paid' ? '<span style="color:#10B981; font-weight:600;">✓ Settled</span>' : 'Pending Link'}
+              ${i.status !== 'paid' && i.payment_url
+          ? `<a href="${i.payment_url}" target="_blank" class="btn" style="padding: 4px 12px; font-size: 0.8rem;">Pay Invoice</a>`
+          : i.status === 'paid' ? '<span style="color:#10B981; font-weight:600;">✓ Settled</span>' : 'Pending Link'}
             </td>
           </tr>
         `;
-      }).join('')
+    }).join('')
     : '<tr><td colspan="5" class="text-secondary" style="text-align:center;">No invoices billed yet.</td></tr>';
 
   const assetsHtml = assets.length
@@ -1673,7 +1671,7 @@ export function proposalRequestPage(): string {
 }
 
 export function proposalListPage(proposals: any[], role: 'admin' | 'user'): string {
-  const proposalsHtml = proposals.length > 0 
+  const proposalsHtml = proposals.length > 0
     ? proposals.map(p => `
       <div class="bento-box" style="margin-bottom:1rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap; gap:0.5rem;">
