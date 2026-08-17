@@ -17,7 +17,9 @@ import {
   clientDashboardPage,
   proposalRequestPage,
   proposalListPage,
-  proposalDetailsPage
+  proposalDetailsPage,
+  blogListPage,
+  blogDetailPage
 } from './templates';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
@@ -175,6 +177,40 @@ app.get('/sitemap.xml', async (c) => {
 });
 
 app.get('/contact', (c) => c.redirect('/user/login'));
+
+// Blog list page — all published posts
+app.get('/blog', async (c) => {
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: posts } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('is_published', 1)
+      .order('created_at', { ascending: false });
+    return c.html(blogListPage(posts || []));
+  } catch {
+    return c.html(blogListPage([]));
+  }
+});
+
+// Blog detail page — single post by slug
+app.get('/blog/:slug', async (c) => {
+  const slug = c.req.param('slug');
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: post } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('slug', slug)
+      .eq('is_published', 1)
+      .single();
+    if (!post) return c.notFound();
+    return c.html(blogDetailPage(post));
+  } catch {
+    return c.notFound();
+  }
+});
+
 
 app.post('/contact', async (c) => {
   const body = await c.req.parseBody();

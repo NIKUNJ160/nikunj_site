@@ -191,24 +191,31 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
     </div>
   `).join('');
 
-  const blogHtml = data.blogPosts.length
-    ? data.blogPosts.map(p => `
+  const latestBlogPosts = data.blogPosts.slice(0, 3);
+  const blogHtml = latestBlogPosts.length
+    ? latestBlogPosts.map(p => `
       <article class="glass blog-card" data-scroll>
+        <div class="blog-card-meta">
+          <span class="blog-card-date">${new Date(p.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+        </div>
         <h3><a href="/blog/${p.slug}">${p.title}</a></h3>
-        <span class="text-muted">${new Date(p.created_at).toLocaleDateString()}</span>
+        ${p.excerpt ? `<p class="text-secondary">${p.excerpt}</p>` : ''}
+        <a href="/blog/${p.slug}" class="blog-read-more">Read More &rarr;</a>
       </article>
     `).join('')
     : `
-      <div class="glass blog-card" data-scroll>
-        <h3>Custom SEO Architectures</h3>
-        <span class="text-muted">August 12, 2026</span>
+      <article class="glass blog-card" data-scroll>
+        <div class="blog-card-meta"><span class="blog-card-date">Aug 12, 2026</span></div>
+        <h3><a href="/blog">Custom SEO Architectures</a></h3>
         <p class="text-secondary">Deploying dynamic sitemaps at the edge with zero static building steps.</p>
-      </div>
-      <div class="glass blog-card" data-scroll>
-        <h3>Optimizing Web Core Vitals</h3>
-        <span class="text-muted">August 10, 2026</span>
+        <a href="/blog" class="blog-read-more">Read More &rarr;</a>
+      </article>
+      <article class="glass blog-card" data-scroll>
+        <div class="blog-card-meta"><span class="blog-card-date">Aug 10, 2026</span></div>
+        <h3><a href="/blog">Optimizing Web Core Vitals</a></h3>
         <p class="text-secondary">Bypassing heavy client libraries and optimizing images to achieve high lighthouse scores.</p>
-      </div>
+        <a href="/blog" class="blog-read-more">Read More &rarr;</a>
+      </article>
     `;
 
   const content = `
@@ -287,6 +294,9 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
       <div class="blog-grid">
         ${blogHtml}
       </div>
+      <div class="section-cta">
+        <a href="/blog" class="btn-outline">View All Articles &rarr;</a>
+      </div>
     </section>
 
     <section id="contact" class="section-container" data-scroll-section>
@@ -359,6 +369,97 @@ export function registerPage(error?: string): string {
     </section>
   `;
   return layout("Register", content);
+}
+
+export function blogListPage(posts: any[]): string {
+  const postsHtml = posts.length
+    ? posts.map(p => `
+      <article class="glass blog-list-card" data-scroll>
+        <div class="blog-list-meta">
+          <span class="blog-card-date">${new Date(p.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+        </div>
+        <h2 class="blog-list-title"><a href="/blog/${p.slug}">${p.title}</a></h2>
+        ${p.excerpt ? `<p class="blog-list-excerpt">${p.excerpt}</p>` : ''}
+        <a href="/blog/${p.slug}" class="blog-read-more">Read Article &rarr;</a>
+      </article>
+    `).join('')
+    : `<div class="glass blog-list-card" style="text-align:center; padding: 3rem;">
+        <h3 style="margin-bottom:0.5rem;">No articles published yet</h3>
+        <p class="text-secondary">Check back soon for new writing.</p>
+      </div>`;
+
+  const content = `
+    <section class="section-container blog-page-hero" data-scroll-section>
+      <div class="section-header">
+        <span class="section-tag">ARTICLES</span>
+        <h1 class="section-heading">Blog &amp; Writing</h1>
+        <p class="text-secondary" style="margin-top:0.75rem; max-width:540px;">Thoughts on web development, performance, and building at the edge.</p>
+      </div>
+    </section>
+
+    <section class="section-container" data-scroll-section>
+      <div class="blog-list">
+        ${postsHtml}
+      </div>
+      <div style="text-align:center; margin-top: 3rem;">
+        <a href="/#blog" class="btn-outline">&larr; Back to Home</a>
+      </div>
+    </section>
+
+    <footer class="copyrights" data-scroll-section>
+      <div class="footer-container">
+        <p>&copy; 2026 Nikunj Pateliya. All Rights Reserved.</p>
+        <div class="footer-links">
+          <a href="/">Home</a>
+          <a href="/#about">About</a>
+          <a href="/#services">Services</a>
+          <a href="/#portfolio">Portfolio</a>
+          <a href="/blog">Blog</a>
+        </div>
+      </div>
+    </footer>
+  `;
+
+  return layout("Blog & Writing", content, "Articles and writing by Nikunj Pateliya on web development, performance, and edge computing.");
+}
+
+export function blogDetailPage(post: any): string {
+  const formattedDate = new Date(post.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const content = `
+    <section class="section-container blog-post-page" data-scroll-section>
+      <div class="blog-post-header">
+        <a href="/blog" class="blog-back-link">&larr; All Articles</a>
+        <span class="blog-card-date" style="margin-top: 1rem; display:block;">${formattedDate}</span>
+        <h1 class="blog-post-title">${post.title}</h1>
+        ${post.excerpt ? `<p class="blog-post-excerpt">${post.excerpt}</p>` : ''}
+      </div>
+    </section>
+
+    <section class="section-container" data-scroll-section>
+      <div class="glass blog-post-body">
+        ${post.body || post.content || '<p>Content coming soon.</p>'}
+      </div>
+      <div style="text-align:center; margin-top: 3rem;">
+        <a href="/blog" class="btn-outline">&larr; Back to All Articles</a>
+      </div>
+    </section>
+
+    <footer class="copyrights" data-scroll-section>
+      <div class="footer-container">
+        <p>&copy; 2026 Nikunj Pateliya. All Rights Reserved.</p>
+        <div class="footer-links">
+          <a href="/">Home</a>
+          <a href="/#about">About</a>
+          <a href="/#services">Services</a>
+          <a href="/#portfolio">Portfolio</a>
+          <a href="/blog">Blog</a>
+        </div>
+      </div>
+    </footer>
+  `;
+
+  return layout(post.title, content, post.excerpt || `${post.title} — Blog by Nikunj Pateliya`);
 }
 
 export function adminMenuPage(
