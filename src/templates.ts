@@ -493,15 +493,24 @@ export function adminMenuPage(
     metadata?: any;
   }
 ): string {
+  const allBlogs = extra?.allBlogs || [];
+  const allProjects = extra?.allProjects || [];
+  const allServices = extra?.allServices || [];
+  const allTestimonials = extra?.allTestimonials || [];
+  const metadata = extra?.metadata || {};
+
+  /* ---- Render HTML Lists ---- */
   const usersHtml = users.map(u => `
     <tr>
-      <td>${u.email}</td>
+      <td><strong>${u.email}</strong></td>
       <td><span class="role-badge role-${u.role}">${u.role}</span></td>
       <td>
-        <form action="/admin/menu/users/delete" method="POST" style="display:inline; margin:0;">
-          <input type="hidden" name="id" value="${u.id}">
-          <button type="submit" class="btn-delete" onclick="return confirm('Delete user?')">Delete</button>
-        </form>
+        ${u.role !== 'admin' ? `
+          <form action="/admin/menu/users/delete" method="POST" style="display:inline; margin:0;">
+            <input type="hidden" name="id" value="${u.id}">
+            <button type="submit" class="btn-delete" onclick="return confirm('Delete user ${u.email}?')">Delete</button>
+          </form>
+        ` : '<span class="text-muted" style="font-size:0.75rem;">Protected</span>'}
       </td>
     </tr>
   `).join('');
@@ -509,15 +518,15 @@ export function adminMenuPage(
   const messagesHtml = messages.map(m => `
     <div class="glass message-card">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; gap: 0.5rem;">
-        <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700;">${m.subject}</h4>
-        <span class="status-badge" style="font-size:0.7rem; padding: 2px 8px; background: rgba(255,255,255,0.05); color: var(--text-primary);">${m.status}</span>
+        <h4 style="margin: 0; font-size: 1rem; font-weight: 700;">${m.subject}</h4>
+        <span class="status-badge" style="font-size:0.7rem; padding: 2px 8px; background: rgba(255,255,255,0.08); color: var(--text-primary);">${m.status}</span>
       </div>
-      <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">${m.body}</p>
+      <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem; line-height: 1.5;">${m.body}</p>
       <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-glass); padding-top: 0.5rem; margin-top: 0.5rem;">
         <small class="text-muted">${new Date(m.created_at).toLocaleString()}</small>
         <form action="/admin/menu/messages/delete" method="POST" style="margin:0;">
           <input type="hidden" name="id" value="${m.id}">
-          <button type="submit" class="btn-delete" style="padding: 2px 8px; font-size: 0.75rem;" onclick="return confirm('Delete message?')">Delete</button>
+          <button type="submit" class="btn-delete" style="padding: 3px 8px; font-size: 0.75rem;" onclick="return confirm('Delete message?')">Delete</button>
         </form>
       </div>
     </div>
@@ -530,24 +539,22 @@ export function adminMenuPage(
   const projectsHtml = projects.map(p => `
     <div class="glass message-card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; gap: 0.5rem;">
-        <h4 style="margin:0; font-weight: 700;">${p.title}</h4>
+        <h4 style="margin:0; font-weight: 700; font-size: 1rem;">${p.title}</h4>
         <span class="status-badge status-${p.status}" style="font-size:0.7rem; padding: 2px 8px;">${p.status}</span>
       </div>
       <small style="display:block; margin-bottom:0.5rem;" class="text-muted">Client: <strong>${p.client_email}</strong></small>
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; font-size:0.75rem; margin-bottom:0.5rem;">
-        ${p.figma_link ? `<a href="${p.figma_link}" target="_blank" style="color:var(--accent-color);">Figma</a>` : ''}
-        ${p.staging_link ? `<a href="${p.staging_link}" target="_blank" style="color:var(--accent-color);">Staging</a>` : ''}
-        ${p.production_link ? `<a href="${p.production_link}" target="_blank" style="color:var(--accent-color);">Production</a>` : ''}
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap; font-size:0.78rem; margin-bottom:0.5rem;">
+        ${p.figma_link ? `<a href="${p.figma_link}" target="_blank" style="color:var(--accent-color); font-weight:600;">Figma</a>` : ''}
+        ${p.staging_link ? `<a href="${p.staging_link}" target="_blank" style="color:var(--accent-color); font-weight:600;">Staging</a>` : ''}
+        ${p.production_link ? `<a href="${p.production_link}" target="_blank" style="color:var(--accent-color); font-weight:600;">Production</a>` : ''}
       </div>
       <div style="border-top:1px solid var(--border-glass); padding-top:0.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <small class="text-muted">Created: ${new Date(p.created_at).toLocaleDateString()}</small>
         <div style="display:flex; gap:0.5rem; align-items:center;">
-          <small class="text-muted">Created: ${new Date(p.created_at).toLocaleDateString()}</small>
-        </div>
-        <div style="display:flex; gap:0.5rem; align-items:center;">
-          <a href="/admin/clients/${p.id}" style="font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:99px; background:var(--accent-color); color:#fff; text-decoration:none;">View Client &rarr;</a>
+          <a href="/admin/clients/${p.id}" class="btn" style="padding:4px 12px; font-size:0.75rem;">Manage Client &rarr;</a>
           <form action="/admin/client/delete" method="POST" style="margin:0;">
             <input type="hidden" name="id" value="${p.id}">
-            <button type="submit" class="btn-delete" style="padding: 2px 8px; font-size:0.75rem;" onclick="return confirm('Delete client portal and all milestone/invoices? This deletes the client user too.')">Delete</button>
+            <button type="submit" class="btn-delete" style="padding: 4px 8px; font-size:0.75rem;" onclick="return confirm('Delete client portal and all milestone/invoices?')">Delete</button>
           </form>
         </div>
       </div>
@@ -557,333 +564,652 @@ export function adminMenuPage(
   const clientAssetsHtml = clientAssets.map(a => `
     <div class="glass message-card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; gap: 0.5rem;">
-        <h4 style="margin: 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><a href="${a.file_url}" target="_blank" download style="color:var(--accent-color); font-weight:600;">${a.file_name}</a></h4>
+        <h4 style="margin: 0; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><a href="${a.file_url}" target="_blank" download style="color:var(--accent-color); font-weight:600;">${a.file_name}</a></h4>
         <span class="role-badge role-user" style="font-size:0.65rem; padding: 2px 8px;">${a.category}</span>
       </div>
-      <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem;">${a.description || 'No description notes.'}</p>
-      <small style="display:block; margin-bottom:0.5rem;" class="text-muted">Client: <strong>${a.client_email}</strong></small>
-      <small class="text-muted" style="font-size: 0.75rem;">Uploaded: ${new Date(a.created_at).toLocaleString()}</small>
+      <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem;">${a.description || 'No notes.'}</p>
+      <small style="display:block; margin-bottom:0.25rem;" class="text-muted">Client: <strong>${a.client_email}</strong></small>
+      <small class="text-muted" style="font-size: 0.75rem;">Uploaded: ${new Date(a.created_at).toLocaleDateString()}</small>
     </div>
   `).join('');
 
-  const allTestimonials = extra?.allTestimonials || [];
-
   const testimonialsListHtml = allTestimonials.map(t => `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 6px; gap: 1rem; margin-bottom: 0.5rem;">
-      <div style="flex: 1; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-        <strong>${t.name}</strong>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 8px; gap: 1rem; margin-bottom: 0.5rem;">
+      <div style="flex: 1; font-size: 0.85rem; min-width: 0;">
+        <strong style="color:var(--text-primary);">${t.name}</strong>
         <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">${t.role}</span>
-        <span style="font-size: 0.75rem; color: var(--text-secondary); display: block; overflow: hidden; text-overflow: ellipsis;">"${t.text}"</span>
+        <span style="font-size: 0.75rem; color: var(--text-secondary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">"${t.text}"</span>
       </div>
       <form action="/admin/testimonial/delete" method="POST" style="margin:0; flex-shrink:0;">
         <input type="hidden" name="id" value="${t.id}">
-        <button type="submit" class="btn-delete" style="padding: 3px 6px; font-size: 0.7rem;" onclick="return confirm('Delete testimonial from ${t.name}?')">Delete</button>
+        <button type="submit" class="btn-delete" style="padding: 3px 8px; font-size: 0.72rem;" onclick="return confirm('Delete testimonial from ${t.name}?')">Delete</button>
       </form>
     </div>
   `).join('');
 
-
-  const allBlogs = extra?.allBlogs || [];
-  const allProjects = extra?.allProjects || [];
-  const allServices = extra?.allServices || [];
-  const metadata = extra?.metadata || {};
-
   const servicesListHtml = allServices.map(s => `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 6px; gap: 1rem; margin-bottom: 0.5rem;">
-      <div style="flex: 1; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-        <strong>${s.title}</strong>
-        <span style="font-size: 0.75rem; color: var(--text-secondary); display: block; overflow: hidden; text-overflow: ellipsis;">${s.description}</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 8px; gap: 1rem; margin-bottom: 0.5rem;">
+      <div style="flex: 1; font-size: 0.85rem; min-width: 0;">
+        <strong style="color:var(--text-primary);">${s.title}</strong>
+        <span style="font-size: 0.75rem; color: var(--text-secondary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${s.description}</span>
       </div>
       <form action="/admin/service/delete" method="POST" style="margin:0; flex-shrink:0;">
         <input type="hidden" name="id" value="${s.id}">
-        <button type="submit" class="btn-delete" style="padding: 3px 6px; font-size: 0.7rem;" onclick="return confirm('Delete service ${s.title}?')">Delete</button>
+        <button type="submit" class="btn-delete" style="padding: 3px 8px; font-size: 0.72rem;" onclick="return confirm('Delete service ${s.title}?')">Delete</button>
       </form>
     </div>
   `).join('');
 
   const projectsListHtml = allProjects.map(p => `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 6px; gap: 1rem; margin-bottom: 0.5rem;">
-      <div style="flex: 1; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-        <strong>${p.title}</strong>
-        <span class="role-badge role-user" style="font-size:0.65rem; padding: 1px 6px;">${p.category || 'Portfolio'}</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 8px; gap: 1rem; margin-bottom: 0.5rem;">
+      <div style="flex: 1; font-size: 0.85rem; min-width: 0;">
+        <strong style="color:var(--text-primary);">${p.title}</strong>
+        <span class="role-badge role-user" style="font-size:0.65rem; padding: 1px 6px; margin-left: 6px;">${p.category || 'Portfolio'}</span>
       </div>
       <form action="/admin/content/delete" method="POST" style="margin:0; flex-shrink:0;">
         <input type="hidden" name="id" value="${p.id}">
-        <button type="submit" class="btn-delete" style="padding: 3px 6px; font-size: 0.7rem;" onclick="return confirm('Delete project ${p.title}?')">Delete</button>
+        <button type="submit" class="btn-delete" style="padding: 3px 8px; font-size: 0.72rem;" onclick="return confirm('Delete project ${p.title}?')">Delete</button>
       </form>
     </div>
   `).join('');
 
   const blogsListHtml = allBlogs.map(b => `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 6px; gap: 1rem; margin-bottom: 0.5rem;">
-      <div style="flex: 1; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-        <strong>${b.title}</strong>
-        <span class="role-badge role-admin" style="font-size:0.65rem; padding: 1px 6px;">/blog/${b.slug}</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 8px; gap: 1rem; margin-bottom: 0.5rem;">
+      <div style="flex: 1; font-size: 0.85rem; min-width: 0;">
+        <strong style="color:var(--text-primary);">${b.title}</strong>
+        <span class="role-badge role-admin" style="font-size:0.65rem; padding: 1px 6px; margin-left: 6px;">/blog/${b.slug}</span>
       </div>
       <form action="/admin/content/delete" method="POST" style="margin:0; flex-shrink:0;">
         <input type="hidden" name="id" value="${b.id}">
-        <button type="submit" class="btn-delete" style="padding: 3px 6px; font-size: 0.7rem;" onclick="return confirm('Delete blog ${b.title}?')">Delete</button>
+        <button type="submit" class="btn-delete" style="padding: 3px 8px; font-size: 0.72rem;" onclick="return confirm('Delete blog ${b.title}?')">Delete</button>
       </form>
     </div>
   `).join('');
 
   const content = `
-    <style>
-      .admin-dashboard {
-        padding: 120px 24px 60px;
-        max-width: 1400px;
-        margin: 0 auto;
-      }
-      .dashboard-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-      }
-      .admin-flex {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 2rem;
-      }
-      .admin-forms-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-        gap: 1.5rem;
-      }
-      .admin-form-card {
-        padding: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.8rem;
-        border-radius: 12px;
-      }
-      .status-onboarding { background: #3B82F6; color: white; }
-      .status-wireframing { background: #8B5CF6; color: white; }
-      .status-development { background: #F59E0B; color: white; }
-      .status-testing { background: #EC4899; color: white; }
-      .status-completed { background: #10B981; color: white; }
+    <div class="admin-dashboard-v2">
       
-      .alert-banner {
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 1.5rem;
-        font-weight: 600;
-      }
-      .alert-success { background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
-      .alert-error { background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3); }
-    </style>
+      <!-- Top Alert Banners -->
+      ${error ? `<div class="alert-banner alert-error" style="margin-bottom:1.5rem; padding:1rem; border-radius:10px; background:rgba(239,68,68,0.12); color:#EF4444; border:1px solid rgba(239,68,68,0.3); font-weight:600;">${error}</div>` : ''}
+      ${success ? `<div class="alert-banner alert-success" style="margin-bottom:1.5rem; padding:1rem; border-radius:10px; background:rgba(16,185,129,0.12); color:#10B981; border:1px solid rgba(16,185,129,0.3); font-weight:600;">${success}</div>` : ''}
 
-    <div class="admin-dashboard">
-      <header class="dashboard-header">
-        <h2>Admin Management Portal</h2>
-        <div style="display: flex; gap: 1rem; align-items: center;">
-          <a href="/admin/data" class="btn">Data Access</a>
-          <form action="/admin/logout" method="POST" style="margin:0;">
-            <button type="submit" class="btn-outline">Logout</button>
-          </form>
-        </div>
-      </header>
-
-      ${error ? `<div class="alert-banner alert-error">${error}</div>` : ''}
-      ${success ? `<div class="alert-banner alert-success">${success}</div>` : ''}
-      
-      <div class="admin-flex">
-        <section class="dashboard-col glass" style="padding: 1.5rem; border-radius:12px;">
-          <h3 style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem;">Client Portal Creator</h3>
-          <div class="admin-forms-grid">
-            
-            <div class="admin-form-card glass" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding: 2rem;">
-              <h4 style="color: var(--accent-color); margin-bottom: 1rem;">1. Clients Proposal Reviewer</h4>
-              <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Review and approve incoming client project proposals to automatically create their projects.</p>
-              <a href="/admin/proposals" class="btn">Open Proposals Reviewer</a>
-            </div>
-
-            <form action="/admin/milestone/create" method="POST" class="admin-form-card glass">
-              <h4 style="color: var(--accent-color); margin:0;">2. Add Milestone</h4>
-              <select name="project_id" required class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border: 1px solid var(--border-glass);">
-                <option value="" disabled selected>Select Client Project</option>
-                ${projectsOptionsHtml}
-              </select>
-              <input type="text" name="title" placeholder="Milestone Title (e.g. Deliver Wireframes)" required class="form-input">
-              <textarea name="description" placeholder="Milestone Description" class="form-textarea" style="height:70px;"></textarea>
-              <input type="date" name="due_date" required class="form-input">
-              <select name="status" class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border: 1px solid var(--border-glass);">
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-              </select>
-              <button type="submit" class="btn">Add Milestone</button>
-            </form>
-
-            <form action="/admin/invoice/create" method="POST" class="admin-form-card glass">
-              <h4 style="color: var(--accent-color); margin:0;">3. Add Invoice</h4>
-              <select name="project_id" required class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border: 1px solid var(--border-glass);">
-                <option value="" disabled selected>Select Client Project</option>
-                ${projectsOptionsHtml}
-              </select>
-              <input type="text" name="invoice_number" placeholder="Invoice # (e.g. INV-001)" required class="form-input">
-              <input type="number" step="0.01" name="amount" placeholder="Amount (e.g. 1500.00)" required class="form-input">
-              <input type="date" name="due_date" required class="form-input">
-              <input type="url" name="payment_url" placeholder="Stripe/Payment URL (Optional)" class="form-input">
-              <select name="status" class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border: 1px solid var(--border-glass);">
-                <option value="unpaid">Unpaid</option>
-                <option value="paid">Paid</option>
-                <option value="overdue">Overdue</option>
-              </select>
-              <button type="submit" class="btn">Add Invoice</button>
-            </form>
-
+      <div class="admin-layout-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="admin-sidebar-v2 glass">
+          <div class="admin-sidebar-header">
+            <h3 class="admin-sidebar-title">Admin Console</h3>
+            <span class="admin-sidebar-subtitle">Nikunj Pateliya Portfolio</span>
           </div>
-        </section>
 
-        <div class="dashboard-grid">
-          <section class="dashboard-col glass" style="border-radius:12px;">
-            <h3>Active Client Projects</h3>
-            <div class="messages-list" style="max-height:400px; overflow-y:auto; padding-right:5px;">
-              ${projectsHtml.length ? projectsHtml : '<p class="text-secondary">No client projects created yet.</p>'}
-            </div>
-          </section>
+          <ul class="admin-nav-menu">
+            <li>
+              <button class="admin-nav-link active" data-tab="tab-overview">
+                <svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+                Overview
+              </button>
+            </li>
+            <li>
+              <button class="admin-nav-link" data-tab="tab-clients">
+                <svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Clients &amp; Proposals
+              </button>
+            </li>
+            <li>
+              <button class="admin-nav-link" data-tab="tab-content">
+                <svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                Content Manager
+              </button>
+            </li>
+            <li>
+              <button class="admin-nav-link" data-tab="tab-settings">
+                <svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                Settings &amp; Users
+              </button>
+            </li>
+          </ul>
 
-          <section class="dashboard-col glass" style="border-radius:12px;">
-            <h3>Client Uploads & Briefs</h3>
-            <div class="messages-list" style="max-height:400px; overflow-y:auto; padding-right:5px;">
-              ${clientAssetsHtml.length ? clientAssetsHtml : '<p class="text-secondary">No files uploaded by clients yet.</p>'}
-            </div>
-          </section>
-        </div>
+          <div style="margin-top:auto; padding-top:16px; border-top:1px solid var(--border-glass); display:flex; flex-direction:column; gap:10px;">
+            <a href="/admin/data" class="btn-outline" style="text-align:center; font-size:0.82rem; padding:8px 12px;">Raw Database Data</a>
+            <form action="/admin/logout" method="POST" style="margin:0;">
+              <button type="submit" class="btn-delete" style="width:100%; padding:8px 12px; font-size:0.82rem;">Sign Out</button>
+            </form>
+          </div>
+        </aside>
 
-        <div class="dashboard-grid">
-          <section class="dashboard-col glass" style="border-radius:12px;">
-            <h3>Registered System Users</h3>
-            <div class="table-responsive">
-              <table class="users-table">
-                <thead>
-                  <tr>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${usersHtml}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section class="dashboard-col glass" style="border-radius:12px;">
-            <h3>Visitor Messages</h3>
-            <div class="messages-list" style="max-height:400px; overflow-y:auto; padding-right:5px;">
-              ${messagesHtml.length ? messagesHtml : '<p class="text-secondary">No messages yet.</p>'}
-            </div>
-          </section>
-        </div>
-
-        <div class="admin-sections-manager" style="margin-top: 2rem; grid-column: 1/-1;">
-          <h3 style="border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem; margin-bottom: 1.5rem; font-weight:700;">Website Sections & Content Manager</h3>
+        <!-- Main Panel Content -->
+        <main class="admin-main-panel">
           
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 2rem; align-items: start;">
+          <!-- TAB 1: OVERVIEW -->
+          <div id="tab-overview" class="admin-tab-pane active">
             
-            <!-- 1. Manage About -->
-            <form action="/admin/about/update" method="POST" class="admin-form-card glass" style="padding: 1.5rem; border-radius: 12px; gap: 1rem;">
-              <h4 style="color: var(--accent-color); margin:0; font-weight:700;">About Section Bio</h4>
-              <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.25rem;">Intro Bio Paragraph 1</label>
-                <textarea name="about_bio_1" class="form-textarea" style="height:80px; width:100%;" required>${metadata.about_bio_1 || ''}</textarea>
+            <!-- KPI Stat Cards -->
+            <div class="admin-kpi-grid">
+              <div class="admin-kpi-card glass">
+                <div class="admin-kpi-info">
+                  <h4>Active Client Projects</h4>
+                  <p class="admin-kpi-number">${projects.length}</p>
+                </div>
+                <div class="admin-kpi-icon-box">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                </div>
               </div>
-              <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.25rem;">Detail Bio Paragraph 2</label>
-                <textarea name="about_bio_2" class="form-textarea" style="height:80px; width:100%;" required>${metadata.about_bio_2 || ''}</textarea>
-              </div>
-              <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.25rem;">Profile Image File Path</label>
-                <input type="text" name="about_profile_image" value="${metadata.about_profile_image || ''}" required class="form-input">
-              </div>
-              <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.25rem;">Download CV File Path</label>
-                <input type="text" name="about_cv_url" value="${metadata.about_cv_url || ''}" required class="form-input">
-              </div>
-              <button type="submit" class="btn">Update About Section</button>
-            </form>
 
-            <!-- 2. Manage Services -->
-            <div class="glass" style="padding: 1.5rem; border-radius: 12px;">
-              <h4 style="color: var(--accent-color); margin: 0 0 1rem 0; font-weight:700;">Services Offered</h4>
-              <form action="/admin/service/create" method="POST" class="admin-form-card" style="padding:0; background:none; border:none; box-shadow:none; gap:0.8rem; margin-bottom:1.5rem;">
-                <input type="text" name="title" placeholder="Service Title (e.g. Web Design)" required class="form-input">
-                <textarea name="description" placeholder="Service Description" class="form-textarea" style="height:60px;" required></textarea>
-                <textarea name="icon" placeholder="Icon SVG (e.g. <svg>...</svg>)" class="form-textarea" style="height:60px;" required></textarea>
-                <button type="submit" class="btn">Add New Service</button>
-              </form>
-              <div style="border-top:1px solid var(--border-glass); padding-top:1rem; max-height:220px; overflow-y:auto;">
-                <h5 style="margin-top:0; margin-bottom:0.75rem;">Active Services:</h5>
-                ${servicesListHtml.length ? servicesListHtml : '<p class="text-secondary">No custom services added.</p>'}
+              <div class="admin-kpi-card glass">
+                <div class="admin-kpi-info">
+                  <h4>Published Articles</h4>
+                  <p class="admin-kpi-number">${allBlogs.length}</p>
+                </div>
+                <div class="admin-kpi-icon-box">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                </div>
+              </div>
+
+              <div class="admin-kpi-card glass">
+                <div class="admin-kpi-info">
+                  <h4>Visitor Messages</h4>
+                  <p class="admin-kpi-number">${messages.length}</p>
+                </div>
+                <div class="admin-kpi-icon-box">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                </div>
+              </div>
+
+              <div class="admin-kpi-card glass">
+                <div class="admin-kpi-info">
+                  <h4>System Users</h4>
+                  <p class="admin-kpi-number">${users.length}</p>
+                </div>
+                <div class="admin-kpi-icon-box">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
               </div>
             </div>
 
-            <!-- 3. Manage Projects Done -->
-            <div class="glass" style="padding: 1.5rem; border-radius: 12px;">
-              <h4 style="color: var(--accent-color); margin: 0 0 1rem 0; font-weight:700;">Projects Done (Portfolio)</h4>
-              <form action="/admin/content/create" method="POST" class="admin-form-card" style="padding:0; background:none; border:none; box-shadow:none; gap:0.8rem; margin-bottom:1.5rem;">
-                <input type="hidden" name="type" value="project">
-                <input type="text" name="title" placeholder="Project Title" required class="form-input">
-                <input type="text" name="category" placeholder="Category (e.g. Web Development)" required class="form-input">
-                <select name="class_name" required class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border: 1px solid var(--border-glass);">
-                  <option value="gal_a">Web Development (gal_a)</option>
-                  <option value="gal_b">Creative Design (gal_b)</option>
-                  <option value="gal_c">Graphic Design (gal_c)</option>
-                </select>
-                <input type="text" name="image_url" placeholder="Image File Path" required class="form-input">
-                <textarea name="content" placeholder="Project Details / Description..." class="form-textarea" style="height:60px;" required></textarea>
-                <button type="submit" class="btn">Add Project Entry</button>
-              </form>
-              <div style="border-top:1px solid var(--border-glass); padding-top:1rem; max-height:220px; overflow-y:auto;">
-                <h5 style="margin-top:0; margin-bottom:0.75rem;">Active Projects:</h5>
-                ${projectsListHtml.length ? projectsListHtml : '<p class="text-secondary">No custom projects added.</p>'}
+            <!-- Quick Actions Grid -->
+            <div class="glass" style="padding:20px; border-radius:16px;">
+              <div class="admin-section-header" style="margin-bottom:16px;">
+                <h3 class="admin-section-title">Quick Action Center</h3>
+              </div>
+              <div class="admin-actions-grid">
+                <button class="admin-action-btn" onclick="openAdminModal('modal-add-milestone')">
+                  <span>➕ Add Milestone</span>
+                </button>
+                <button class="admin-action-btn" onclick="openAdminModal('modal-add-invoice')">
+                  <span>💳 Add Invoice</span>
+                </button>
+                <button class="admin-action-btn" onclick="openAdminModal('modal-create-blog')">
+                  <span>✍️ Add Blog Post</span>
+                </button>
+                <button class="admin-action-btn" onclick="openAdminModal('modal-create-project')">
+                  <span>🚀 Add Portfolio Project</span>
+                </button>
+                <button class="admin-action-btn" onclick="openAdminModal('modal-create-service')">
+                  <span>🛠️ Add Service</span>
+                </button>
+                <a href="/admin/proposals" class="admin-action-btn">
+                  <span>📑 Review Proposals</span>
+                </a>
               </div>
             </div>
 
-            <!-- 4. Manage Blogs -->
-            <div class="glass" style="padding: 1.5rem; border-radius: 12px;">
-              <h4 style="color: var(--accent-color); margin: 0 0 1rem 0; font-weight:700;">Blog Articles</h4>
-              <form action="/admin/content/create" method="POST" class="admin-form-card" style="padding:0; background:none; border:none; box-shadow:none; gap:0.8rem; margin-bottom:1.5rem;">
-                <input type="hidden" name="type" value="blog">
-                <input type="text" name="title" placeholder="Article Title" required class="form-input">
-                <input type="text" name="slug" placeholder="Article Slug (e.g. core-vitals)" required class="form-input">
-                <textarea name="content" placeholder="Article Body Content..." class="form-textarea" style="height:60px;" required></textarea>
-                <button type="submit" class="btn">Publish Blog Article</button>
-              </form>
-              <div style="border-top:1px solid var(--border-glass); padding-top:1rem; max-height:220px; overflow-y:auto;">
-                <h5 style="margin-top:0; margin-bottom:0.75rem;">Published Articles:</h5>
-                ${blogsListHtml.length ? blogsListHtml : '<p class="text-secondary">No blog articles published.</p>'}
+            <!-- Recent Activity Split -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+              
+              <!-- Recent Messages -->
+              <div class="glass" style="padding:20px; border-radius:16px;">
+                <div class="admin-section-header" style="margin-bottom:14px;">
+                  <h3 class="admin-section-title">Recent Visitor Messages</h3>
+                  <button class="btn-outline" style="font-size:0.75rem; padding:4px 10px;" onclick="switchAdminTab('tab-settings')">View All &rarr;</button>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                  ${messages.length ? messages.slice(0, 3).map(m => `
+                    <div style="padding:10px 12px; background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); border-radius:10px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <strong style="font-size:0.88rem;">${m.subject}</strong>
+                        <small class="text-muted" style="font-size:0.7rem;">${new Date(m.created_at).toLocaleDateString()}</small>
+                      </div>
+                      <p style="font-size:0.82rem; color:var(--text-secondary); margin:0; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${m.body}</p>
+                    </div>
+                  `).join('') : '<p class="text-secondary" style="font-size:0.88rem;">No messages yet.</p>'}
+                </div>
+              </div>
+
+              <!-- Active Projects Summary -->
+              <div class="glass" style="padding:20px; border-radius:16px;">
+                <div class="admin-section-header" style="margin-bottom:14px;">
+                  <h3 class="admin-section-title">Client Projects Summary</h3>
+                  <button class="btn-outline" style="font-size:0.75rem; padding:4px 10px;" onclick="switchAdminTab('tab-clients')">Manage All &rarr;</button>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                  ${projects.length ? projects.slice(0, 3).map(p => `
+                    <div style="padding:10px 12px; background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+                      <div>
+                        <strong style="font-size:0.88rem; display:block;">${p.title}</strong>
+                        <small class="text-muted" style="font-size:0.75rem;">${p.client_email}</small>
+                      </div>
+                      <span class="status-badge status-${p.status}" style="font-size:0.68rem; padding:2px 8px;">${p.status}</span>
+                    </div>
+                  `).join('') : '<p class="text-secondary" style="font-size:0.88rem;">No client projects created yet.</p>'}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- TAB 2: CLIENTS & PROPOSALS -->
+          <div id="tab-clients" class="admin-tab-pane">
+            
+            <!-- Proposal Reviewer Banner -->
+            <div class="glass" style="padding:20px; border-radius:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; background:linear-gradient(135deg, rgba(59,130,246,0.12), rgba(139,92,246,0.12));">
+              <div>
+                <h3 style="margin:0 0 4px 0; font-size:1.1rem; color:var(--text-primary);">Client Proposals Reviewer</h3>
+                <p style="margin:0; font-size:0.85rem; color:var(--text-secondary);">Review incoming client scope requests and convert them automatically into project portals.</p>
+              </div>
+              <a href="/admin/proposals" class="btn">Open Proposals Reviewer &rarr;</a>
+            </div>
+
+            <!-- Client Projects Hub -->
+            <div class="glass" style="padding:20px; border-radius:16px;">
+              <div class="admin-section-header" style="margin-bottom:16px;">
+                <h3 class="admin-section-title">Active Client Portals</h3>
+                <div style="display:flex; gap:10px;">
+                  <button class="btn" style="font-size:0.8rem; padding:6px 14px;" onclick="openAdminModal('modal-add-milestone')">+ Add Milestone</button>
+                  <button class="btn" style="font-size:0.8rem; padding:6px 14px;" onclick="openAdminModal('modal-add-invoice')">+ Add Invoice</button>
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:16px;">
+                ${projectsHtml.length ? projectsHtml : '<p class="text-secondary" style="grid-column:1/-1;">No client projects created yet.</p>'}
               </div>
             </div>
 
-            <!-- 5. Feedback / Testimonials -->
-            <div class="glass" style="padding: 1.5rem; border-radius: 12px;">
-              <h4 style="color: var(--accent-color); margin: 0 0 1rem 0; font-weight:700;">Feedback &amp; Testimonials</h4>
-              <form action="/admin/testimonial/create" method="POST" class="admin-form-card" style="padding:0; background:none; border:none; box-shadow:none; gap:0.8rem; margin-bottom:1.5rem;">
-                <input type="text" name="name" placeholder="Client Name" required class="form-input">
-                <input type="text" name="role" placeholder="Role / Location (e.g. Designer, Mumbai)" required class="form-input">
-                <textarea name="text" placeholder="Testimonial / Feedback text..." class="form-textarea" style="height:70px;" required></textarea>
-                <input type="text" name="img" placeholder="Avatar image path (leave blank for default)" class="form-input">
-                <button type="submit" class="btn">Add Testimonial</button>
-              </form>
-              <div style="border-top:1px solid var(--border-glass); padding-top:1rem; max-height:280px; overflow-y:auto;">
-                <h5 style="margin-top:0; margin-bottom:0.75rem;">Active Testimonials:</h5>
-                ${testimonialsListHtml.length ? testimonialsListHtml : '<p class="text-secondary">No testimonials added yet.</p>'}
+            <!-- Client Uploads & Deliverables -->
+            <div class="glass" style="padding:20px; border-radius:16px;">
+              <div class="admin-section-header" style="margin-bottom:16px;">
+                <h3 class="admin-section-title">Client Files &amp; Assets</h3>
+              </div>
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+                ${clientAssetsHtml.length ? clientAssetsHtml : '<p class="text-secondary" style="grid-column:1/-1;">No files uploaded by clients yet.</p>'}
               </div>
             </div>
 
           </div>
-        </div>
+
+          <!-- TAB 3: CONTENT MANAGER -->
+          <div id="tab-content" class="admin-tab-pane">
+            
+            <div class="admin-section-header">
+              <h3 class="admin-section-title">Website Content &amp; Portfolio Manager</h3>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn" style="font-size:0.8rem; padding:6px 12px;" onclick="openAdminModal('modal-create-blog')">+ New Blog</button>
+                <button class="btn" style="font-size:0.8rem; padding:6px 12px;" onclick="openAdminModal('modal-create-project')">+ New Project</button>
+                <button class="btn" style="font-size:0.8rem; padding:6px 12px;" onclick="openAdminModal('modal-create-service')">+ New Service</button>
+                <button class="btn" style="font-size:0.8rem; padding:6px 12px;" onclick="openAdminModal('modal-create-testimonial')">+ New Testimonial</button>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+              
+              <!-- 1. Blog Articles -->
+              <div class="glass" style="padding:20px; border-radius:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                  <h4 style="margin:0; font-size:1.05rem; color:var(--accent-color);">Blog Articles (${allBlogs.length})</h4>
+                  <button class="btn-outline" style="font-size:0.75rem; padding:3px 8px;" onclick="openAdminModal('modal-create-blog')">+ Add</button>
+                </div>
+                <div style="max-height:280px; overflow-y:auto; padding-right:4px;">
+                  ${blogsListHtml.length ? blogsListHtml : '<p class="text-secondary" style="font-size:0.85rem;">No blog articles published.</p>'}
+                </div>
+              </div>
+
+              <!-- 2. Portfolio Projects -->
+              <div class="glass" style="padding:20px; border-radius:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                  <h4 style="margin:0; font-size:1.05rem; color:var(--accent-color);">Portfolio Projects (${allProjects.length})</h4>
+                  <button class="btn-outline" style="font-size:0.75rem; padding:3px 8px;" onclick="openAdminModal('modal-create-project')">+ Add</button>
+                </div>
+                <div style="max-height:280px; overflow-y:auto; padding-right:4px;">
+                  ${projectsListHtml.length ? projectsListHtml : '<p class="text-secondary" style="font-size:0.85rem;">No portfolio projects added.</p>'}
+                </div>
+              </div>
+
+              <!-- 3. Services Offered -->
+              <div class="glass" style="padding:20px; border-radius:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                  <h4 style="margin:0; font-size:1.05rem; color:var(--accent-color);">Services Offered (${allServices.length})</h4>
+                  <button class="btn-outline" style="font-size:0.75rem; padding:3px 8px;" onclick="openAdminModal('modal-create-service')">+ Add</button>
+                </div>
+                <div style="max-height:280px; overflow-y:auto; padding-right:4px;">
+                  ${servicesListHtml.length ? servicesListHtml : '<p class="text-secondary" style="font-size:0.85rem;">No services added.</p>'}
+                </div>
+              </div>
+
+              <!-- 4. Testimonials -->
+              <div class="glass" style="padding:20px; border-radius:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                  <h4 style="margin:0; font-size:1.05rem; color:var(--accent-color);">Testimonials (${allTestimonials.length})</h4>
+                  <button class="btn-outline" style="font-size:0.75rem; padding:3px 8px;" onclick="openAdminModal('modal-create-testimonial')">+ Add</button>
+                </div>
+                <div style="max-height:280px; overflow-y:auto; padding-right:4px;">
+                  ${testimonialsListHtml.length ? testimonialsListHtml : '<p class="text-secondary" style="font-size:0.85rem;">No testimonials added.</p>'}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- TAB 4: SETTINGS & USERS -->
+          <div id="tab-settings" class="admin-tab-pane">
+            
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
+              
+              <!-- About Bio & Site Config -->
+              <div class="glass" style="padding:20px; border-radius:16px;">
+                <h3 class="admin-section-title" style="margin-bottom:14px;">Website Bio &amp; Metadata Config</h3>
+                <form action="/admin/about/update" method="POST" style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="admin-form-group">
+                    <label>Intro Bio Paragraph 1</label>
+                    <textarea name="about_bio_1" class="form-textarea" style="height:70px;" required>${metadata.about_bio_1 || ''}</textarea>
+                  </div>
+                  <div class="admin-form-group">
+                    <label>Detail Bio Paragraph 2</label>
+                    <textarea name="about_bio_2" class="form-textarea" style="height:70px;" required>${metadata.about_bio_2 || ''}</textarea>
+                  </div>
+                  <div class="admin-form-group">
+                    <label>Profile Image File Path</label>
+                    <input type="text" name="about_profile_image" value="${metadata.about_profile_image || ''}" required class="form-input">
+                  </div>
+                  <div class="admin-form-group">
+                    <label>Download CV File Path</label>
+                    <input type="text" name="about_cv_url" value="${metadata.about_cv_url || ''}" required class="form-input">
+                  </div>
+                  <button type="submit" class="btn" style="margin-top:4px;">Save Bio Changes</button>
+                </form>
+              </div>
+
+              <!-- Registered Users Table -->
+              <div class="glass" style="padding:20px; border-radius:16px;">
+                <h3 class="admin-section-title" style="margin-bottom:14px;">System User Accounts</h3>
+                <div class="table-responsive" style="max-height:360px; overflow-y:auto;">
+                  <table class="users-table" style="width:100%;">
+                    <thead>
+                      <tr>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${usersHtml}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Visitor Messages List -->
+            <div class="glass" style="padding:20px; border-radius:16px;">
+              <h3 class="admin-section-title" style="margin-bottom:14px;">All Visitor Contact Messages</h3>
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px; max-height:400px; overflow-y:auto; padding-right:4px;">
+                ${messagesHtml.length ? messagesHtml : '<p class="text-secondary">No visitor messages received.</p>'}
+              </div>
+            </div>
+
+          </div>
+
+        </main>
 
       </div>
     </div>
+
+    <!-- MODAL DIALOGS -->
+
+    <!-- Modal 1: Add Milestone -->
+    <div id="modal-add-milestone" class="admin-modal-overlay">
+      <div class="admin-modal-box glass">
+        <div class="admin-modal-header">
+          <h3 class="admin-modal-title">Add Milestone to Client</h3>
+          <button class="admin-modal-close" onclick="closeAdminModal('modal-add-milestone')">&times;</button>
+        </div>
+        <form action="/admin/milestone/create" method="POST">
+          <div class="admin-form-group">
+            <label>Select Client Project</label>
+            <select name="project_id" required class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border: 1px solid var(--border-glass);">
+              <option value="" disabled selected>Select Project...</option>
+              ${projectsOptionsHtml}
+            </select>
+          </div>
+          <div class="admin-form-group">
+            <label>Milestone Title</label>
+            <input type="text" name="title" placeholder="e.g. Complete Wireframes" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Description</label>
+            <textarea name="description" placeholder="Details about this milestone..." class="form-textarea" style="height:60px;"></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Due Date</label>
+            <input type="date" name="due_date" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Status</label>
+            <select name="status" class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border: 1px solid var(--border-glass);">
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <button type="submit" class="btn" style="width:100%; margin-top:8px;">Add Milestone</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 2: Add Invoice -->
+    <div id="modal-add-invoice" class="admin-modal-overlay">
+      <div class="admin-modal-box glass">
+        <div class="admin-modal-header">
+          <h3 class="admin-modal-title">Create Client Invoice</h3>
+          <button class="admin-modal-close" onclick="closeAdminModal('modal-add-invoice')">&times;</button>
+        </div>
+        <form action="/admin/invoice/create" method="POST">
+          <div class="admin-form-group">
+            <label>Select Client Project</label>
+            <select name="project_id" required class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border: 1px solid var(--border-glass);">
+              <option value="" disabled selected>Select Project...</option>
+              ${projectsOptionsHtml}
+            </select>
+          </div>
+          <div class="admin-form-group">
+            <label>Invoice Number</label>
+            <input type="text" name="invoice_number" placeholder="e.g. INV-2026-01" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Amount ($)</label>
+            <input type="number" step="0.01" name="amount" placeholder="e.g. 1250.00" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Due Date</label>
+            <input type="date" name="due_date" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Payment URL (Stripe / Razorpay)</label>
+            <input type="url" name="payment_url" placeholder="https://buy.stripe.com/..." class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Status</label>
+            <select name="status" class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border: 1px solid var(--border-glass);">
+              <option value="unpaid">Unpaid</option>
+              <option value="paid">Paid</option>
+              <option value="overdue">Overdue</option>
+            </select>
+          </div>
+          <button type="submit" class="btn" style="width:100%; margin-top:8px;">Create Invoice</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 3: Create Blog Article -->
+    <div id="modal-create-blog" class="admin-modal-overlay">
+      <div class="admin-modal-box glass">
+        <div class="admin-modal-header">
+          <h3 class="admin-modal-title">Publish New Blog Article</h3>
+          <button class="admin-modal-close" onclick="closeAdminModal('modal-create-blog')">&times;</button>
+        </div>
+        <form action="/admin/content/create" method="POST">
+          <input type="hidden" name="type" value="blog">
+          <div class="admin-form-group">
+            <label>Article Title</label>
+            <input type="text" name="title" placeholder="e.g. Optimizing Web Core Vitals" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Slug (URL identifier)</label>
+            <input type="text" name="slug" placeholder="e.g. web-core-vitals" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Body Content (HTML / Markdown)</label>
+            <textarea name="content" placeholder="Article content body..." class="form-textarea" style="height:120px;" required></textarea>
+          </div>
+          <button type="submit" class="btn" style="width:100%; margin-top:8px;">Publish Article</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 4: Create Portfolio Project -->
+    <div id="modal-create-project" class="admin-modal-overlay">
+      <div class="admin-modal-box glass">
+        <div class="admin-modal-header">
+          <h3 class="admin-modal-title">Add Portfolio Project Entry</h3>
+          <button class="admin-modal-close" onclick="closeAdminModal('modal-create-project')">&times;</button>
+        </div>
+        <form action="/admin/content/create" method="POST">
+          <input type="hidden" name="type" value="project">
+          <div class="admin-form-group">
+            <label>Project Title</label>
+            <input type="text" name="title" placeholder="e.g. SaaS Analytics Portal" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Category</label>
+            <input type="text" name="category" placeholder="e.g. Web Development" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Gallery Filter Class</label>
+            <select name="class_name" required class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border: 1px solid var(--border-glass);">
+              <option value="gal_a">Web Development (gal_a)</option>
+              <option value="gal_b">Creative Design (gal_b)</option>
+              <option value="gal_c">Graphic Design (gal_c)</option>
+            </select>
+          </div>
+          <div class="admin-form-group">
+            <label>Image File Path</label>
+            <input type="text" name="image_url" placeholder="/assets/images/uploads/gallery_img-01.jpg" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Project Description</label>
+            <textarea name="content" placeholder="Short description..." class="form-textarea" style="height:70px;" required></textarea>
+          </div>
+          <button type="submit" class="btn" style="width:100%; margin-top:8px;">Add Portfolio Entry</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 5: Create Service -->
+    <div id="modal-create-service" class="admin-modal-overlay">
+      <div class="admin-modal-box glass">
+        <div class="admin-modal-header">
+          <h3 class="admin-modal-title">Add Service Offered</h3>
+          <button class="admin-modal-close" onclick="closeAdminModal('modal-create-service')">&times;</button>
+        </div>
+        <form action="/admin/service/create" method="POST">
+          <div class="admin-form-group">
+            <label>Service Title</label>
+            <input type="text" name="title" placeholder="e.g. Edge Analytics" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Service Description</label>
+            <textarea name="description" placeholder="Detailed service description..." class="form-textarea" style="height:70px;" required></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Icon SVG Code</label>
+            <textarea name="icon" placeholder='<svg class="icon-svg" viewBox="0 0 24 24">...</svg>' class="form-textarea" style="height:70px;" required></textarea>
+          </div>
+          <button type="submit" class="btn" style="width:100%; margin-top:8px;">Add Service</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 6: Create Testimonial -->
+    <div id="modal-create-testimonial" class="admin-modal-overlay">
+      <div class="admin-modal-box glass">
+        <div class="admin-modal-header">
+          <h3 class="admin-modal-title">Add Client Testimonial</h3>
+          <button class="admin-modal-close" onclick="closeAdminModal('modal-create-testimonial')">&times;</button>
+        </div>
+        <form action="/admin/testimonial/create" method="POST">
+          <div class="admin-form-group">
+            <label>Client Name</label>
+            <input type="text" name="name" placeholder="e.g. James Fernando" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Role / Company / Location</label>
+            <input type="text" name="role" placeholder="e.g. Manager at Racer" required class="form-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Testimonial Text</label>
+            <textarea name="text" placeholder="Client feedback text..." class="form-textarea" style="height:80px;" required></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Avatar Image Path (Optional)</label>
+            <input type="text" name="img" placeholder="/assets/images/uploads/testi_01.png" class="form-input">
+          </div>
+          <button type="submit" class="btn" style="width:100%; margin-top:8px;">Add Testimonial</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Client-Side Admin JS Scripting -->
+    <script>
+      function switchAdminTab(tabId) {
+        document.querySelectorAll('.admin-nav-link').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+        });
+        document.querySelectorAll('.admin-tab-pane').forEach(pane => {
+          pane.classList.toggle('active', pane.id === tabId);
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.admin-nav-link').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-tab');
+            if (targetTab) switchAdminTab(targetTab);
+          });
+        });
+
+        // Close modal when clicking overlay backdrop
+        document.querySelectorAll('.admin-modal-overlay').forEach(overlay => {
+          overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+              overlay.classList.remove('active');
+            }
+          });
+        });
+      });
+
+      function openAdminModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.add('active');
+      }
+
+      function closeAdminModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.remove('active');
+      }
+    </script>
   `;
-  return layout("Admin Menu", content, "Admin Control Panel", "admin");
+  return layout("Admin Management Console", content, "Admin Control Panel", "admin");
 }
 
 export function adminClientDetailPage(data: {
