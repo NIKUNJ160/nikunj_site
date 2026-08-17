@@ -423,12 +423,17 @@ export function adminMenuPage(
         ${p.staging_link ? `<a href="${p.staging_link}" target="_blank" style="color:var(--accent-color);">Staging</a>` : ''}
         ${p.production_link ? `<a href="${p.production_link}" target="_blank" style="color:var(--accent-color);">Production</a>` : ''}
       </div>
-      <div style="border-top:1px solid var(--border-glass); padding-top:0.5rem; display:flex; justify-content:space-between; align-items:center;">
-        <small class="text-muted">Created: ${new Date(p.created_at).toLocaleDateString()}</small>
-        <form action="/admin/client/delete" method="POST" style="margin:0;">
-          <input type="hidden" name="id" value="${p.id}">
-          <button type="submit" class="btn-delete" style="padding: 2px 8px; font-size:0.75rem;" onclick="return confirm('Delete client portal and all milestone/invoices? This deletes the client user too.')">Delete Portal</button>
-        </form>
+      <div style="border-top:1px solid var(--border-glass); padding-top:0.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <small class="text-muted">Created: ${new Date(p.created_at).toLocaleDateString()}</small>
+        </div>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <a href="/admin/clients/${p.id}" style="font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:99px; background:var(--accent-color); color:#fff; text-decoration:none;">View Client &rarr;</a>
+          <form action="/admin/client/delete" method="POST" style="margin:0;">
+            <input type="hidden" name="id" value="${p.id}">
+            <button type="submit" class="btn-delete" style="padding: 2px 8px; font-size:0.75rem;" onclick="return confirm('Delete client portal and all milestone/invoices? This deletes the client user too.')">Delete</button>
+          </form>
+        </div>
       </div>
     </div>
   `).join('');
@@ -763,6 +768,281 @@ export function adminMenuPage(
     </div>
   `;
   return layout("Admin Menu", content, "Admin Control Panel", "admin");
+}
+
+export function adminClientDetailPage(data: {
+  project: any;
+  assets: any[];
+  milestones: any[];
+  invoices: any[];
+  error?: string;
+  success?: string;
+}): string {
+  const { project, assets, milestones, invoices, error, success } = data;
+  const projectId = project.id;
+
+  const statusColors: Record<string, string> = {
+    onboarding: '#3B82F6',
+    wireframing: '#8B5CF6',
+    development: '#F59E0B',
+    testing: '#EC4899',
+    completed: '#10B981',
+  };
+  const statusColor = statusColors[project.status] || '#6B7280';
+
+  /* ---- Milestones ---- */
+  const msStatusIcon: Record<string, string> = {
+    completed: '&#10003;',
+    in_progress: '&#8635;',
+    pending: '&#9679;',
+  };
+  const msStatusColor: Record<string, string> = {
+    completed: '#10B981',
+    in_progress: '#F59E0B',
+    pending: '#6B7280',
+  };
+
+  const milestonesHtml = milestones.length
+    ? milestones.map((m: any, i: number) => `
+      <div style="display:flex; gap:1rem; align-items:flex-start; padding: 1rem 0; ${i < milestones.length - 1 ? 'border-bottom:1px solid var(--border-glass);' : ''}">
+        <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0;">
+          <span style="font-size:1.1rem; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:${msStatusColor[m.status] || '#6B7280'}20; color:${msStatusColor[m.status] || '#6B7280'}; border:2px solid ${msStatusColor[m.status] || '#6B7280'};">${msStatusIcon[m.status] || '&#9679;'}</span>
+          ${i < milestones.length - 1 ? '<div style="width:2px; flex:1; min-height:20px; background:var(--border-glass); margin-top:4px;"></div>' : ''}
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.25rem;">
+            <strong style="font-size:0.95rem;">${m.title}</strong>
+            <span style="font-size:0.68rem; font-weight:700; padding:2px 10px; border-radius:99px; background:${msStatusColor[m.status] || '#6B7280'}20; color:${msStatusColor[m.status] || '#6B7280'}; border:1px solid ${msStatusColor[m.status] || '#6B7280'}40;">${m.status.replace('_', ' ')}</span>
+          </div>
+          ${m.description ? `<p style="font-size:0.85rem; color:var(--text-secondary); margin:0 0 0.25rem 0;">${m.description}</p>` : ''}
+          ${m.due_date ? `<small style="color:var(--text-secondary);">Due: ${new Date(m.due_date).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}</small>` : ''}
+        </div>
+      </div>
+    `).join('')
+    : '<p style="color:var(--text-secondary); padding: 1rem 0;">No milestones added yet.</p>';
+
+  /* ---- Invoices ---- */
+  const invStatusColor: Record<string, string> = {
+    paid: '#10B981',
+    unpaid: '#F59E0B',
+    overdue: '#EF4444',
+  };
+
+  const totalBilled = invoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.amount), 0);
+  const totalPaid = invoices.filter((inv: any) => inv.status === 'paid').reduce((sum: number, inv: any) => sum + parseFloat(inv.amount), 0);
+
+  const invoicesHtml = invoices.length
+    ? `
+      <div style="display:flex; gap:1rem; margin-bottom:1.25rem; flex-wrap:wrap;">
+        <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:0.75rem 1.25rem;">
+          <div style="font-size:0.68rem; color:var(--text-secondary); font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Total Billed</div>
+          <div style="font-size:1.3rem; font-weight:800; color:#10B981;">Rs.${totalBilled.toLocaleString('en-IN')}</div>
+        </div>
+        <div style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:0.75rem 1.25rem;">
+          <div style="font-size:0.68rem; color:var(--text-secondary); font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Collected</div>
+          <div style="font-size:1.3rem; font-weight:800; color:#3B82F6;">Rs.${totalPaid.toLocaleString('en-IN')}</div>
+        </div>
+        <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:0.75rem 1.25rem;">
+          <div style="font-size:0.68rem; color:var(--text-secondary); font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Outstanding</div>
+          <div style="font-size:1.3rem; font-weight:800; color:#EF4444;">Rs.${(totalBilled - totalPaid).toLocaleString('en-IN')}</div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="users-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Amount</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th>Payment</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${invoices.map((inv: any) => `
+              <tr>
+                <td style="font-family:monospace; font-weight:600;">${inv.invoice_number}</td>
+                <td style="font-weight:700;">Rs.${parseFloat(inv.amount).toLocaleString('en-IN')}</td>
+                <td>${inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '-'}</td>
+                <td><span style="font-size:0.68rem; font-weight:700; padding:3px 10px; border-radius:99px; background:${invStatusColor[inv.status] || '#6B7280'}20; color:${invStatusColor[inv.status] || '#6B7280'}; border:1px solid ${invStatusColor[inv.status] || '#6B7280'}40;">${inv.status}</span></td>
+                <td>${inv.payment_url ? `<a href="${inv.payment_url}" target="_blank" style="color:var(--accent-color); font-size:0.8rem; font-weight:600;">Pay Link</a>` : '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `
+    : '<p style="color:var(--text-secondary); padding: 0.5rem 0;">No invoices created yet.</p>';
+
+  /* ---- Assets ---- */
+  const categoryEmoji: Record<string, string> = {
+    'Logo': '&#128444;',
+    'Content/Copy': '&#128196;',
+    'Credentials': '&#128273;',
+    'Design References': '&#127912;',
+    'Other': '&#128206;',
+  };
+  const categoryColors: Record<string, string> = {
+    'Logo': '#8B5CF6',
+    'Content/Copy': '#3B82F6',
+    'Credentials': '#EF4444',
+    'Design References': '#F59E0B',
+    'Other': '#6B7280',
+  };
+
+  const assetsHtml = assets.length
+    ? assets.map((a: any) => `
+      <div style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid var(--border-glass); margin-bottom:0.5rem;">
+        <div style="font-size:1.4rem; flex-shrink:0;">${categoryEmoji[a.category] || '&#128206;'}</div>
+        <div style="flex:1; min-width:0;">
+          <a href="${a.file_url}" target="_blank" download style="color:var(--accent-color); font-weight:600; font-size:0.875rem; word-break:break-all;">${a.file_name}</a>
+          ${a.description ? `<p style="font-size:0.78rem; color:var(--text-secondary); margin:2px 0 0 0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${a.description}</p>` : ''}
+          <small style="font-size:0.7rem; color:var(--text-secondary);">${new Date(a.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}</small>
+        </div>
+        <span style="flex-shrink:0; font-size:0.65rem; font-weight:700; padding:3px 8px; border-radius:99px; background:${categoryColors[a.category] || '#6B7280'}20; color:${categoryColors[a.category] || '#6B7280'}; border:1px solid ${categoryColors[a.category] || '#6B7280'}40;">${a.category}</span>
+      </div>
+    `).join('')
+    : '<p style="color:var(--text-secondary);">No files uploaded by this client yet.</p>';
+
+  const content = `
+    <style>
+      .client-detail-page { padding: 120px 24px 60px; max-width: 1200px; margin: 0 auto; }
+      .client-section { padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; }
+      .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 1.5rem; }
+      .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+      @media(max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+      .section-title { font-size: 1rem; font-weight: 800; letter-spacing: -0.01em; color: var(--accent-color); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-glass); }
+      .alert-banner { padding: 0.875rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-weight: 600; font-size: 0.9rem; }
+      .alert-success { background: rgba(16, 185, 129, 0.12); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+      .alert-error   { background: rgba(239, 68, 68, 0.12);  color: #EF4444;  border: 1px solid rgba(239, 68, 68, 0.3);  }
+      details summary::-webkit-details-marker { display: none; }
+    </style>
+
+    <div class="client-detail-page">
+
+      <!-- Page Header -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <a href="/admin/menu" style="font-size:0.82rem; color:var(--text-secondary); text-decoration:none; display:inline-flex; align-items:center; gap:0.3rem; margin-bottom:0.5rem;">&larr; Back to Admin Panel</a>
+          <h2 style="margin:0; font-size:1.6rem; font-weight:800;">${project.title}</h2>
+          <p style="margin:0.25rem 0 0; color:var(--text-secondary); font-size:0.875rem;">Client: <strong>${project.client_email}</strong></p>
+        </div>
+        <span style="font-size:0.78rem; font-weight:700; padding:6px 18px; border-radius:99px; background:${statusColor}20; color:${statusColor}; border:1px solid ${statusColor}40; text-transform:capitalize;">${project.status}</span>
+      </div>
+
+      ${error   ? `<div class="alert-banner alert-error">&#9888; ${error}</div>`   : ''}
+      ${success ? `<div class="alert-banner alert-success">&#10003; ${success}</div>` : ''}
+
+      <!-- Project Settings -->
+      <section class="client-section glass">
+        <h3 class="section-title">&#9881; Project Settings</h3>
+        <form action="/admin/clients/${projectId}/project/update" method="POST">
+          <div class="form-row" style="margin-bottom:0.75rem;">
+            <div>
+              <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-secondary);">Project Status</label>
+              <select name="status" class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border-glass);">
+                ${['onboarding','wireframing','development','testing','completed'].map(s =>
+                  `<option value="${s}" ${project.status === s ? 'selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
+                ).join('')}
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-secondary);">Figma Link</label>
+              <input type="url" name="figma_link" value="${project.figma_link || ''}" placeholder="https://figma.com/..." class="form-input">
+            </div>
+            <div>
+              <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-secondary);">Staging Link</label>
+              <input type="url" name="staging_link" value="${project.staging_link || ''}" placeholder="https://staging.example.com" class="form-input">
+            </div>
+            <div>
+              <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-secondary);">Production Link</label>
+              <input type="url" name="production_link" value="${project.production_link || ''}" placeholder="https://example.com" class="form-input">
+            </div>
+          </div>
+          <button type="submit" class="btn" style="margin-top:0.25rem;">Save Settings</button>
+        </form>
+      </section>
+
+      <!-- 2-column grid: Milestones + Billing -->
+      <div class="detail-grid">
+
+        <!-- Milestones -->
+        <section class="client-section glass">
+          <h3 class="section-title">Milestones (${milestones.length})</h3>
+          <div>${milestonesHtml}</div>
+          <details style="border-top:1px solid var(--border-glass); padding-top:1rem; margin-top:0.5rem;">
+            <summary style="cursor:pointer; font-weight:700; font-size:0.875rem; color:var(--accent-color); user-select:none; list-style:none;">+ Add New Milestone</summary>
+            <form action="/admin/clients/${projectId}/milestone" method="POST" style="margin-top:1rem; display:flex; flex-direction:column; gap:0.75rem;">
+              <input type="text" name="title" placeholder="Milestone title (e.g. Deliver Wireframes)" required class="form-input">
+              <textarea name="description" placeholder="Optional description..." class="form-textarea" style="height:70px;"></textarea>
+              <div class="form-row">
+                <div>
+                  <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-secondary);">Due Date</label>
+                  <input type="date" name="due_date" class="form-input">
+                </div>
+                <div>
+                  <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-secondary);">Status</label>
+                  <select name="status" class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border-glass);">
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" class="btn">Add Milestone</button>
+            </form>
+          </details>
+        </section>
+
+        <!-- Billing -->
+        <section class="client-section glass">
+          <h3 class="section-title">Billing &amp; Invoices (${invoices.length})</h3>
+          ${invoicesHtml}
+          <details style="border-top:1px solid var(--border-glass); padding-top:1rem; margin-top:1rem;">
+            <summary style="cursor:pointer; font-weight:700; font-size:0.875rem; color:var(--accent-color); user-select:none; list-style:none;">+ Add New Invoice</summary>
+            <form action="/admin/clients/${projectId}/invoice" method="POST" style="margin-top:1rem; display:flex; flex-direction:column; gap:0.75rem;">
+              <div class="form-row">
+                <div>
+                  <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-secondary);">Invoice #</label>
+                  <input type="text" name="invoice_number" placeholder="INV-001" required class="form-input">
+                </div>
+                <div>
+                  <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-secondary);">Amount</label>
+                  <input type="number" step="0.01" name="amount" placeholder="15000.00" required class="form-input">
+                </div>
+              </div>
+              <div class="form-row">
+                <div>
+                  <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-secondary);">Due Date</label>
+                  <input type="date" name="due_date" class="form-input">
+                </div>
+                <div>
+                  <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-secondary);">Status</label>
+                  <select name="status" class="form-input" style="background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border-glass);">
+                    <option value="unpaid">Unpaid</option>
+                    <option value="paid">Paid</option>
+                    <option value="overdue">Overdue</option>
+                  </select>
+                </div>
+              </div>
+              <input type="url" name="payment_url" placeholder="Payment / Stripe URL (optional)" class="form-input">
+              <button type="submit" class="btn">Add Invoice</button>
+            </form>
+          </details>
+        </section>
+
+      </div>
+
+      <!-- Client Assets -->
+      <section class="client-section glass">
+        <h3 class="section-title">Client Uploaded Assets (${assets.length})</h3>
+        ${assetsHtml}
+      </section>
+
+    </div>
+  `;
+
+  return layout(`Client: ${project.title}`, content, `Admin view for ${project.client_email}`, 'admin');
 }
 
 export function adminDataPage(blogPosts: any[], siteConfig: any[]): string {

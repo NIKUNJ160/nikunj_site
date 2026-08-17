@@ -13,6 +13,7 @@ import {
   registerPage, 
   adminMenuPage,
   adminDataPage,
+  adminClientDetailPage,
   clientDashboardPage,
   proposalRequestPage,
   proposalListPage,
@@ -384,6 +385,127 @@ app.get('/admin/data', adminAuthMiddleware, async (c) => {
     return c.html(adminDataPage(blogPosts || [], metadata || []));
   } catch {
     return c.text('Admin data loading failed. Please run database initializations.');
+  }
+});
+
+/* --- Per-Client Detail Pages --- */
+
+app.get('/admin/clients/:projectId', adminAuthMiddleware, async (c) => {
+  const projectId = parseInt(c.req.param('projectId'));
+  const errorMsg = c.req.query('error');
+  const successMsg = c.req.query('success');
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+
+    const { data: project, error: projErr } = await supabase
+      .from('client_projects')
+      .select('*')
+      .eq('id', projectId)
+      .single();
+
+    if (projErr || !project) {
+      return c.redirect('/admin/menu?error=Client project not found.');
+    }
+
+    // Enrich with client email
+    const { data: usr } = await supabase.from('users').select('email').eq('id', project.client_id).single();
+    const enrichedProject = { ...project, client_email: usr?.email || project.client_id };
+
+    const [
+      { data: milestones },
+      { data: invoices },
+      { data: assets }
+    ] = await Promise.all([
+      supabase.from('project_milestones').select('*').eq('project_id', projectId).order('due_date', { ascending: true }),
+      supabase.from('invoices').select('*').eq('project_id', projectId).order('due_date', { ascending: true }),
+      supabase.from('client_assets').select('*').eq('client_id', project.client_id).order('created_at', { ascending: false })
+    ]);
+
+    return c.html(adminClientDetailPage({
+      project: enrichedProject,
+      milestones: milestones || [],
+      invoices: invoices || [],
+      assets: assets || [],
+      error: errorMsg,
+      success: successMsg
+    }));
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/clients/:projectId/milestone', adminAuthMiddleware, async (c) => {
+  const projectId = parseInt(c.req.param('projectId'));
+  const body = await c.req.parseBody();
+  const title = body.title as string;
+  const description = body.description as string;
+  const dueDate = body.due_date as string;
+  const status = body.status as string;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('project_milestones').insert({
+      project_id: projectId,
+      title,
+      description: description || null,
+      due_date: dueDate || null,
+      status
+    });
+    if (error) throw new Error(error.message);
+    return c.redirect(`/admin/clients/${projectId}?success=Milestone added successfully.`);
+  } catch (err: any) {
+    return c.redirect(`/admin/clients/${projectId}?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/clients/:projectId/invoice', adminAuthMiddleware, async (c) => {
+  const projectId = parseInt(c.req.param('projectId'));
+  const body = await c.req.parseBody();
+  const invoiceNumber = body.invoice_number as string;
+  const amount = parseFloat(body.amount as string);
+  const dueDate = body.due_date as string;
+  const paymentUrl = body.payment_url as string;
+  const status = body.status as string;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('invoices').insert({
+      project_id: projectId,
+      invoice_number: invoiceNumber,
+      amount,
+      due_date: dueDate || null,
+      payment_url: paymentUrl || null,
+      status
+    });
+    if (error) throw new Error(error.message);
+    return c.redirect(`/admin/clients/${projectId}?success=Invoice added successfully.`);
+  } catch (err: any) {
+    return c.redirect(`/admin/clients/${projectId}?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/clients/:projectId/project/update', adminAuthMiddleware, async (c) => {
+  const projectId = parseInt(c.req.param('projectId'));
+  const body = await c.req.parseBody();
+  const status = body.status as string;
+  const figmaLink = body.figma_link as string;
+  const stagingLink = body.staging_link as string;
+  const productionLink = body.production_link as string;
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { error } = await supabase.from('client_projects').update({
+      status,
+      figma_link: figmaLink || null,
+      staging_link: stagingLink || null,
+      production_link: productionLink || null,
+      updated_at: new Date().toISOString()
+    }).eq('id', projectId);
+    if (error) throw new Error(error.message);
+    return c.redirect(`/admin/clients/${projectId}?success=Project settings updated.`);
+  } catch (err: any) {
+    return c.redirect(`/admin/clients/${projectId}?error=${encodeURIComponent(err.message)}`);
   }
 });
 
