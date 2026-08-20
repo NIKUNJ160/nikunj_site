@@ -1,6 +1,6 @@
 # Design System — nikunj-portfolio
 
-> Living reference for the visual language of [nikunjpateliya.com](https://nikunjpateliya.com).
+> Living reference for the visual language of [nikunjpateliya.site](https://nikunjpateliya.site).
 > Last updated: August 2026
 
 ---

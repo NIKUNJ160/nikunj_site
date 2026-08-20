@@ -321,13 +321,13 @@ To maximize SEO discoverability, the site serves a dynamic `/sitemap.xml` genera
      <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
        <!-- Static Route -->
        <url>
-         <loc>https://nikunjpateliya.com/</loc>
+         <loc>https://nikunjpateliya.site/</loc>
          <changefreq>weekly</changefreq>
          <priority>1.0</priority>
        </url>
        <!-- Dynamic Blog Post Route -->
        <url>
-         <loc>https://nikunjpateliya.com/blog/example-slug</loc>
+         <loc>https://nikunjpateliya.site/blog/example-slug</loc>
          <lastmod>2026-08-13T07:17:00Z</lastmod>
          <changefreq>monthly</changefreq>
          <priority>0.8</priority>

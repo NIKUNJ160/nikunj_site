@@ -19,7 +19,9 @@ import {
   proposalListPage,
   proposalDetailsPage,
   blogListPage,
-  blogDetailPage
+  blogDetailPage,
+  privacyPage,
+  termsPage
 } from './templates';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
@@ -143,7 +145,7 @@ app.get('/sitemap.xml', async (c) => {
     blogs = data || [];
   } catch {}
 
-  const host = c.req.header('host') || 'nikunjpateliya.com';
+  const host = c.req.header('host') || 'nikunjpateliya.site';
   const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
   const baseUrl = `${protocol}://${host}`;
 
@@ -177,6 +179,26 @@ app.get('/sitemap.xml', async (c) => {
 });
 
 app.get('/contact', (c) => c.redirect('/user/login'));
+
+app.get('/privacy', async (c) => {
+  const token = getCookie(c, 'auth_token');
+  let role: 'admin' | 'user' | undefined;
+  if (token) {
+    const payload = await verifySession(token, getSecret(env<Bindings>(c)));
+    if (payload) role = payload.role;
+  }
+  return c.html(privacyPage(role));
+});
+
+app.get('/terms', async (c) => {
+  const token = getCookie(c, 'auth_token');
+  let role: 'admin' | 'user' | undefined;
+  if (token) {
+    const payload = await verifySession(token, getSecret(env<Bindings>(c)));
+    if (payload) role = payload.role;
+  }
+  return c.html(termsPage(role));
+});
 
 // Blog list page — all published posts
 app.get('/blog', async (c) => {

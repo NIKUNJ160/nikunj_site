@@ -112,6 +112,42 @@ export function layout(title: string, content: string, description: string = "Po
   
   <div class="transition-curtain"></div>
   
+  <div id="cookie-consent-banner" class="cookie-banner" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:min(92%, 680px); background:var(--bg-card, rgba(255,255,255,0.95)); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid var(--border-glass, rgba(0,0,0,0.1)); border-radius:16px; padding:18px 24px; box-shadow:0 10px 30px rgba(0,0,0,0.15); z-index:99999; transition:all 0.3s ease;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+      <div style="flex:1 1 300px;">
+        <p style="margin:0 0 4px 0; font-weight:700; font-size:0.95rem; color:var(--text-primary);">Cookie Consent & Privacy Notice</p>
+        <p style="margin:0; font-size:0.85rem; color:var(--text-secondary); line-height:1.4;">
+          We use essential cookies for security and authentication. Read our <a href="/privacy" style="color:var(--text-primary); text-decoration:underline;">Privacy Policy</a> & <a href="/terms" style="color:var(--text-primary); text-decoration:underline;">Terms & Conditions</a>.
+        </p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button id="cookie-accept-essential" class="btn-outline" style="font-size:0.85rem; padding:8px 14px; min-height:auto;">Essential Only</button>
+        <button id="cookie-accept-all" class="btn" style="font-size:0.85rem; padding:8px 16px; min-height:auto;">Accept All</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function() {
+      try {
+        const consent = localStorage.getItem('cookie_consent');
+        if (!consent) {
+          const banner = document.getElementById('cookie-consent-banner');
+          if (banner) banner.style.display = 'block';
+        }
+        document.getElementById('cookie-accept-all')?.addEventListener('click', function() {
+          localStorage.setItem('cookie_consent', 'all');
+          const banner = document.getElementById('cookie-consent-banner');
+          if (banner) banner.style.display = 'none';
+        });
+        document.getElementById('cookie-accept-essential')?.addEventListener('click', function() {
+          localStorage.setItem('cookie_consent', 'essential');
+          const banner = document.getElementById('cookie-consent-banner');
+          if (banner) banner.style.display = 'none';
+        });
+      } catch(e) {}
+    })();
+  </script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   <script src="/assets/js/main.js"></script>
@@ -323,6 +359,8 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
             <a href="#about">About</a>
             <a href="#services">Services</a>
             <a href="#portfolio">Projects Done</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms & Conditions</a>
             <a href="/user/login">Contact</a>
           </div>
           <div class="footer-social">
@@ -431,6 +469,8 @@ export function blogListPage(posts: any[]): string {
           <a href="/#services">Services</a>
           <a href="/#portfolio">Portfolio</a>
           <a href="/blog">Blog</a>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms & Conditions</a>
         </div>
       </div>
     </footer>
@@ -470,12 +510,171 @@ export function blogDetailPage(post: any): string {
           <a href="/#services">Services</a>
           <a href="/#portfolio">Portfolio</a>
           <a href="/blog">Blog</a>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms & Conditions</a>
         </div>
       </div>
     </footer>
   `;
 
   return layout(post.title, content, post.excerpt || `${post.title} — Blog by Nikunj Pateliya`);
+}
+
+export function privacyPage(role?: 'admin' | 'user'): string {
+  const content = `
+    <div class="section-container" style="padding-top:120px; padding-bottom:60px;">
+      <a href="/" style="color:var(--text-secondary); text-decoration:none; display:inline-block; margin-bottom:1.5rem;">&larr; Back to Home</a>
+      <div class="bento-box" style="margin-bottom:2rem;">
+        <h1 style="font-size:clamp(1.8rem, 4vw, 2.5rem); letter-spacing:-0.03em; margin-bottom:0.5rem; overflow-wrap:break-word;">Privacy Policy</h1>
+        <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:2rem;">Effective Date: August 20, 2026 | Last Updated: August 20, 2026</p>
+        
+        <div style="display:grid; gap:1.75rem; line-height:1.7; color:var(--text-primary);">
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">1. Data Controller & Overview</h2>
+            <p style="color:var(--text-secondary);">
+              This Privacy Policy explains how <strong>Nikunj Pateliya</strong> ("we", "us", or "our"), operating as a Web Designer & Full-Stack Developer based in Gujarat, India, collects, uses, and protects your information when you visit <strong>nikunjpateliya.site</strong> (the "Website").
+            </p>
+            <p style="color:var(--text-secondary);">
+              We are committed to maintaining data privacy and fulfilling our obligations under applicable data protection frameworks, including the EU General Data Protection Regulation (GDPR), the California Consumer Privacy Act (CCPA), and the Information Technology Act of India.
+            </p>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">2. Information We Collect</h2>
+            <ul style="color:var(--text-secondary); padding-left:1.25rem;">
+              <li><strong>Contact & Inquiry Data:</strong> When you submit messages via our Contact Form or Project Proposal Request page, we collect your Name, Email Address, Project Budget, and Message details.</li>
+              <li><strong>Essential Session Data:</strong> For authenticated users (administrators and registered clients), we store essential HTTP-only cookies (<code>auth_token</code>) to maintain your secure login session.</li>
+              <li><strong>Server Logs & Security Data:</strong> Edge network infrastructure automatically collects temporary access records, including IP addresses, browser user-agent strings, and request timestamps to monitor server health and prevent malicious rate-limiting abuse.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">3. Legal Basis for Processing (GDPR Art. 6)</h2>
+            <p style="color:var(--text-secondary);">We process your personal information under the following legal bases:</p>
+            <ul style="color:var(--text-secondary); padding-left:1.25rem;">
+              <li><strong>Pre-contractual & Contractual Steps (Art. 6(1)(b)):</strong> To respond to your portfolio inquiries, discuss service proposals, or deliver client portal services.</li>
+              <li><strong>Legitimate Interests (Art. 6(1)(f)):</strong> To safeguard network security, prevent DDoS attacks, and optimize website stability.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">4. Third-Party Cloud Sub-Processors</h2>
+            <p style="color:var(--text-secondary);">We do not sell, rent, or trade your personal data. We utilize trusted cloud sub-processors exclusively to operate and host this website:</p>
+            <ul style="color:var(--text-secondary); padding-left:1.25rem;">
+              <li><strong>Cloudflare, Inc.:</strong> Global Edge CDN network, DNS routing, and Cloudflare Workers runtime infrastructure.</li>
+              <li><strong>Supabase, Inc.:</strong> Serverless PostgreSQL database cloud hosting for contact submissions, blog posts, and authenticated user profiles.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">5. Cookies & Local Storage</h2>
+            <p style="color:var(--text-secondary);">
+              We use strictly necessary cookies (<code>auth_token</code>) for admin and client portal authentication. We do not deploy intrusive third-party cross-site advertising trackers. Your cookie preferences are remembered locally in your browser (<code>localStorage</code>).
+            </p>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">6. Your Legal Rights</h2>
+            <p style="color:var(--text-secondary);">Depending on your location (e.g. EU/EEA, UK, California, India), you possess specific data rights:</p>
+            <ul style="color:var(--text-secondary); padding-left:1.25rem;">
+              <li><strong>Right to Access:</strong> Request details or copies of the personal data held about you.</li>
+              <li><strong>Right to Rectification & Erasure:</strong> Request correction or complete deletion ("Right to be Forgotten") of your contact messages.</li>
+              <li><strong>Right to Data Portability & Objection:</strong> Request export of your data or object to processing.</li>
+            </ul>
+            <p style="color:var(--text-secondary); margin-top:0.5rem;">To exercise any of these rights, please reach out via our contact form.</p>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">7. Contact Information</h2>
+            <p style="color:var(--text-secondary);">
+              If you have any questions or privacy inquiries, contact:<br>
+              <strong>Nikunj Pateliya</strong><br>
+              Web Designer & Full-Stack Developer<br>
+              Gujarat, India<br>
+              Website: <a href="/#contact" style="color:var(--text-primary); text-decoration:underline;">nikunjpateliya.site/#contact</a>
+            </p>
+          </section>
+        </div>
+      </div>
+    </div>
+  `;
+  return layout("Privacy Policy", content, "Privacy Policy for Nikunj Pateliya's portfolio website", role);
+}
+
+export function termsPage(role?: 'admin' | 'user'): string {
+  const content = `
+    <div class="section-container" style="padding-top:120px; padding-bottom:60px;">
+      <a href="/" style="color:var(--text-secondary); text-decoration:none; display:inline-block; margin-bottom:1.5rem;">&larr; Back to Home</a>
+      <div class="bento-box" style="margin-bottom:2rem;">
+        <h1 style="font-size:clamp(1.8rem, 4vw, 2.5rem); letter-spacing:-0.03em; margin-bottom:0.5rem; overflow-wrap:break-word;">Terms & Conditions</h1>
+        <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:2rem;">Effective Date: August 20, 2026 | Last Updated: August 20, 2026</p>
+        
+        <div style="display:grid; gap:1.75rem; line-height:1.7; color:var(--text-primary);">
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">1. Acceptance of Terms</h2>
+            <p style="color:var(--text-secondary);">
+              By accessing, browsing, or using <strong>nikunjpateliya.site</strong> (the "Website"), you agree to comply with and be bound by these Terms and Conditions. If you do not agree to these terms, please discontinue site usage immediately.
+            </p>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">2. Intellectual Property Rights</h2>
+            <p style="color:var(--text-secondary);">
+              All original content, site architecture, responsive designs, custom code, logos, visual graphics, articles, and documentation published on this Website are the sole intellectual property of <strong>Nikunj Pateliya</strong>, unless explicitly stated otherwise.
+            </p>
+            <p style="color:var(--text-secondary);">
+              You may view and share portfolio links for informational purposes. You may not copy, re-sell, re-license, reverse-engineer, or commercially exploit any software, design, or asset from this Website without explicit written consent.
+            </p>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">3. Professional Freelance Services & Inquiries</h2>
+            <p style="color:var(--text-secondary);">
+              The work samples, service descriptions, and capabilities displayed on this Website represent professional freelance web development and design services.
+            </p>
+            <p style="color:var(--text-secondary);">
+              Submitting a contact form message or project proposal request does not create a binding service contract or obligation. Professional engagements commence only upon mutual execution of a formal Master Services Agreement or contract detailing project scope, deliverables, and payment terms.
+            </p>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">4. Acceptable Website Usage</h2>
+            <p style="color:var(--text-secondary);">When utilizing our contact form or client portal, you agree not to:</p>
+            <ul style="color:var(--text-secondary); padding-left:1.25rem;">
+              <li>Transmit unsolicited spam, commercial advertisements, or phishing attempts.</li>
+              <li>Attempt unauthorized administrative access, brute-force security controls, or probe server infrastructure.</li>
+              <li>Deploy automated bots or scrapers in a manner that degrades service performance.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">5. Limitation of Liability & Warranty Disclaimer</h2>
+            <p style="color:var(--text-secondary);">
+              This Website is provided on an "AS IS" and "AS AVAILABLE" basis without warranties of any kind, whether express or implied. Nikunj Pateliya does not warrant that the website will operate uninterrupted or error-free.
+            </p>
+            <p style="color:var(--text-secondary);">
+              To the maximum extent permitted by applicable law, Nikunj Pateliya shall not be liable for any direct, indirect, incidental, or consequential damages resulting from site availability, data loss, or reliance on information presented herein.
+            </p>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">6. Third-Party Links</h2>
+            <p style="color:var(--text-secondary);">
+              The Website contains links to third-party platforms (e.g., GitHub, LinkedIn, Instagram, WhatsApp). We are not responsible for the privacy practices, content, or availability of third-party external services.
+            </p>
+          </section>
+
+          <section>
+            <h2 style="font-size:1.3rem; margin-bottom:0.5rem; color:var(--text-primary);">7. Governing Law & Dispute Resolution</h2>
+            <p style="color:var(--text-secondary);">
+              These Terms and Conditions shall be governed by and construed in accordance with the laws of <strong>India</strong>. Any legal action or dispute arising under these Terms shall be subject to the exclusive jurisdiction of the competent courts situated in <strong>Gujarat, India</strong>.
+            </p>
+          </section>
+        </div>
+      </div>
+    </div>
+  `;
+  return layout("Terms & Conditions", content, "Terms & Conditions for Nikunj Pateliya's portfolio website", role);
 }
 
 export function adminMenuPage(
