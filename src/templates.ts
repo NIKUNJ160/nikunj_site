@@ -47,6 +47,7 @@ export function layout(title: string, content: string, description: string = "Po
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title} — Nikunj Pateliya</title>
   <meta name="description" content="${description}">
+  <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="stylesheet" href="/assets/css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
