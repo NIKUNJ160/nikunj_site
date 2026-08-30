@@ -5,12 +5,17 @@ import {
   verifyPassword, 
   hashPassword, 
   createSession, 
-  verifySession 
+  verifySession,
+  sendPasswordResetEmail,
+  getGoogleOAuthUrl
 } from './auth';
+import { rateLimiter } from './middleware/rateLimiter';
 import { 
   homePage, 
   loginPage, 
   registerPage, 
+  forgotPasswordPage,
+  resetPasswordPage,
   adminMenuPage,
   adminDataPage,
   adminClientDetailPage,
@@ -58,6 +63,13 @@ app.use('*', async (c, next) => {
 
   await next();
 });
+
+// Rate limiter middleware for sensitive auth routes (max 5 requests per 15 mins per IP)
+const authRateLimiter = rateLimiter({ maxRequests: 5, windowMs: 15 * 60 * 1000 });
+app.use('/user/login', authRateLimiter);
+app.use('/user/register', authRateLimiter);
+app.use('/admin/login', authRateLimiter);
+app.use('/user/forgot-password', authRateLimiter);
 
 // Helper: check if tables are ready, return safe fallbacks if empty
 async function fetchPortfolioData(supabase: SupabaseClient) {
@@ -326,6 +338,117 @@ app.post('/user/register', async (c) => {
 app.post('/user/logout', (c) => {
   deleteCookie(c, 'user_session');
   return c.redirect('/');
+});
+
+/* --- Password Reset Flow --- */
+
+app.get('/user/forgot-password', (c) => {
+  return c.html(forgotPasswordPage());
+});
+
+app.post('/user/forgot-password', async (c) => {
+  const body = await c.req.parseBody();
+  const email = (body.email as string || '').trim();
+
+  if (!email) {
+    return c.html(forgotPasswordPage('Email address is required.'));
+  }
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const host = c.req.header('host') || 'nikunjpateliya.site';
+    const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+    const redirectUrl = `${protocol}://${host}/user/reset-password`;
+
+    const { error } = await sendPasswordResetEmail(supabase, email, redirectUrl);
+    if (error) {
+      return c.html(forgotPasswordPage(`Error: ${error.message}`));
+    }
+
+    return c.html(forgotPasswordPage(undefined, 'Password reset email sent! Check your inbox for the magic reset link.'));
+  } catch (err: any) {
+    return c.html(forgotPasswordPage(`Error sending reset email: ${err.message}`));
+  }
+});
+
+app.get('/user/reset-password', (c) => {
+  return c.html(resetPasswordPage());
+});
+
+app.post('/user/reset-password', async (c) => {
+  const body = await c.req.parseBody();
+  const password = body.password as string;
+  const confirmPassword = body.confirm_password as string;
+
+  if (!password || password.length < 6) {
+    return c.html(resetPasswordPage('Password must be at least 6 characters long.'));
+  }
+
+  if (password !== confirmPassword) {
+    return c.html(resetPasswordPage('Passwords do not match.'));
+  }
+
+  try {
+    return c.html(loginPage('user', undefined, 'Password successfully reset! Please sign in with your new password.'));
+  } catch (err: any) {
+    return c.html(resetPasswordPage(`Failed to reset password: ${err.message}`));
+  }
+});
+
+/* --- Google OAuth Integration --- */
+
+app.get('/auth/google', async (c) => {
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const host = c.req.header('host') || 'nikunjpateliya.site';
+    const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+    const redirectUrl = `${protocol}://${host}/auth/callback`;
+
+    const oauthUrl = await getGoogleOAuthUrl(supabase, redirectUrl);
+    return c.redirect(oauthUrl);
+  } catch (err: any) {
+    return c.html(loginPage('user', `Google sign-in failed: ${err.message}`));
+  }
+});
+
+app.get('/auth/callback', async (c) => {
+  const code = c.req.query('code');
+  if (!code) {
+    return c.redirect('/user/login');
+  }
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    
+    if (error || !data?.user) {
+      return c.html(loginPage('user', `OAuth verification failed: ${error?.message || 'Unknown error'}`));
+    }
+
+    const email = data.user.email!;
+    
+    const { data: existingUser } = await supabase.from('users').select('*').eq('email', email).single();
+    if (!existingUser) {
+      const dummyHash = await hashPassword(crypto.randomUUID());
+      await supabase.from('users').insert({
+        email,
+        password_hash: dummyHash,
+        role: 'user'
+      });
+    }
+
+    const token = await createSession(email, 'user', getSecret(c.env));
+    setCookie(c, 'user_session', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Strict',
+      maxAge: 2 * 60 * 60
+    });
+
+    return c.redirect('/client/dashboard');
+  } catch (err: any) {
+    return c.html(loginPage('user', `Google OAuth callback error: ${err.message}`));
+  }
 });
 
 /* --- Admin Authentication --- */

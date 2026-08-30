@@ -81,3 +81,21 @@ export async function verifySession(token: string, secret: string): Promise<{ em
     return null;
   }
 }
+
+export async function sendPasswordResetEmail(supabase: any, email: string, redirectTo: string) {
+  return await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo
+  });
+}
+
+export async function getGoogleOAuthUrl(supabase: any, redirectTo: string) {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo
+    }
+  });
+  if (error) throw error;
+  return data.url;
+}
+
