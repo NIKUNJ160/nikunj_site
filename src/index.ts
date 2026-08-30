@@ -407,7 +407,11 @@ app.get('/auth/google', async (c) => {
     const oauthUrl = await getGoogleOAuthUrl(supabase, redirectUrl);
     return c.redirect(oauthUrl);
   } catch (err: any) {
-    return c.html(loginPage('user', `Google sign-in failed: ${err.message}`));
+    const errorText = err.msg || err.message || String(err);
+    if (errorText.includes('provider is not enabled')) {
+      return c.html(loginPage('user', 'Google Sign-In is not enabled in your Supabase Dashboard yet. Please enable Google under Authentication -> Providers in Supabase.'));
+    }
+    return c.html(loginPage('user', `Google sign-in failed: ${errorText}`));
   }
 });
 
