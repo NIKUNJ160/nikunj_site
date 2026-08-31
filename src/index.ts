@@ -29,6 +29,12 @@ import {
   termsPage
 } from './templates';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { 
+  PageViewRecord, 
+  EventLogRecord, 
+  AnalyticsTrackPayload, 
+  AnalyticsStats 
+} from './types';
 
 type Bindings = {
   SUPABASE_URL: string;
@@ -245,6 +251,144 @@ app.get('/blog/:slug', async (c) => {
   }
 });
 
+/* --- Edge Analytics & Event Tracking API --- */
+
+app.post('/api/analytics/track', async (c) => {
+  try {
+    let payload: AnalyticsTrackPayload | null = null;
+    const contentType = (c.req.header('content-type') || '').toLowerCase();
+
+    if (contentType.includes('application/json')) {
+      try {
+        payload = await c.req.json<AnalyticsTrackPayload>();
+      } catch {
+        payload = null;
+      }
+    } else {
+      // Handle text/plain (e.g. from navigator.sendBeacon) or form data
+      try {
+        const text = await c.req.text();
+        if (text && text.trim().length > 0) {
+          try {
+            payload = JSON.parse(text) as AnalyticsTrackPayload;
+          } catch {
+            const params = new URLSearchParams(text);
+            if (params.has('type') || params.has('session_id') || params.has('sessionId') || params.has('path') || params.has('url_path')) {
+              payload = Object.fromEntries(params.entries()) as unknown as AnalyticsTrackPayload;
+            }
+          }
+        }
+      } catch {
+        payload = null;
+      }
+
+      if (!payload) {
+        try {
+          const body = await c.req.parseBody();
+          if (body && Object.keys(body).length > 0) {
+            payload = body as unknown as AnalyticsTrackPayload;
+          }
+        } catch {
+          payload = null;
+        }
+      }
+    }
+
+    if (!payload || typeof payload !== 'object') {
+      return c.json({ error: 'Invalid payload' }, 400);
+    }
+
+    const type = payload.type;
+    if (type !== 'pageview' && type !== 'event') {
+      return c.json({ error: 'Invalid payload: type must be pageview or event' }, 400);
+    }
+
+    // Extract fields with aliases support
+    const sessionId = (payload.session_id || payload.sessionId || '').trim() || 'anonymous_session';
+    const urlPath = (payload.url_path || payload.path || '/').trim();
+
+    // Server-side header enrichment
+    const userAgent = payload.user_agent || payload.userAgent || c.req.header('user-agent') || 'unknown';
+    const referrer = payload.referrer !== undefined ? payload.referrer : (c.req.header('referer') || c.req.header('referrer') || null);
+    const clientIp = c.req.header('cf-connecting-ip') || 
+                     c.req.header('x-forwarded-for')?.split(',')[0].trim() || 
+                     c.req.header('x-real-ip') || 
+                     null;
+    const country = payload.country || c.req.header('cf-ipcountry') || null;
+
+    // Detect device type if not provided
+    let deviceType = payload.device_type || payload.deviceType;
+    if (!deviceType && userAgent) {
+      const uaLower = userAgent.toLowerCase();
+      if (/tablet|ipad|playbook|silk/i.test(uaLower)) {
+        deviceType = 'tablet';
+      } else if (/mobile|iphone|android|touch/i.test(uaLower)) {
+        deviceType = 'mobile';
+      } else {
+        deviceType = 'desktop';
+      }
+    }
+
+    // Initialize Supabase client
+    const supabaseUrl = env<Bindings>(c).SUPABASE_URL;
+    const supabaseKey = env<Bindings>(c).SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      return c.json({ success: true, warning: 'queued/fallback: database credentials not configured' }, 200);
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    if (type === 'pageview') {
+      const record: PageViewRecord = {
+        session_id: sessionId,
+        url_path: urlPath,
+        referrer: referrer || null,
+        user_agent: userAgent || null,
+        ip_address: clientIp || null,
+        device_type: deviceType || 'desktop',
+        country: country || null
+      };
+
+      const { error } = await supabase.from('page_views').insert(record);
+      if (error) {
+        console.warn('Supabase page_views insert warning:', error.message);
+        return c.json({ success: true, warning: 'queued/fallback' }, 200);
+      }
+    } else {
+      const eventName = (payload.event_name || payload.eventName || 'custom_event').trim();
+      const eventCategory = (payload.event_category || payload.eventCategory || 'interaction').trim();
+      let eventData = payload.event_data || payload.eventData || payload.metadata || {};
+
+      if (typeof eventData === 'string') {
+        try {
+          eventData = JSON.parse(eventData);
+        } catch {
+          eventData = { raw: eventData };
+        }
+      }
+
+      const record: EventLogRecord = {
+        session_id: sessionId,
+        event_name: eventName,
+        event_category: eventCategory,
+        url_path: urlPath,
+        event_data: typeof eventData === 'object' && eventData !== null ? eventData : { value: eventData }
+      };
+
+      const { error } = await supabase.from('event_logs').insert(record);
+      if (error) {
+        console.warn('Supabase event_logs insert warning:', error.message);
+        return c.json({ success: true, warning: 'queued/fallback' }, 200);
+      }
+    }
+
+    return c.json({ success: true }, 200);
+  } catch (err: any) {
+    console.warn('Analytics tracking error:', err?.message || err);
+    return c.json({ success: true, warning: 'fallback_handled' }, 200);
+  }
+});
 
 app.post('/contact', async (c) => {
   const body = await c.req.parseBody();

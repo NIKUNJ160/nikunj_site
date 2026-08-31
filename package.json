@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "deploy": "vercel",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node tests/run-e2e.mjs",
+    "test:e2e": "node ./node_modules/tsx/dist/cli.mjs --test tests/analytics-e2e.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

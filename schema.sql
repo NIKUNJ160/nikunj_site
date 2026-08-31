@@ -167,3 +167,40 @@ WHERE NOT EXISTS (SELECT 1 FROM testimonials WHERE name = 'Jacques Philips');
 INSERT INTO testimonials (name, role, text, img)
 SELECT 'Venanda Mercy', 'New York City', 'Great & Talented Team! Clean layouts, high performance, and smooth animations. Highly recommended.', '/assets/images/uploads/testi_03.png'
 WHERE NOT EXISTS (SELECT 1 FROM testimonials WHERE name = 'Venanda Mercy');
+
+-- Analytics: Page Views Table
+CREATE TABLE IF NOT EXISTS page_views (
+    id BIGSERIAL PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    url_path TEXT NOT NULL,
+    referrer TEXT,
+    user_agent TEXT,
+    ip_address TEXT,
+    device_type TEXT,
+    country TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Analytics: Event Logs Table (Custom Interactions & Conversions)
+CREATE TABLE IF NOT EXISTS event_logs (
+    id BIGSERIAL PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    event_name TEXT NOT NULL,
+    event_category TEXT DEFAULT 'interaction',
+    url_path TEXT NOT NULL,
+    event_data JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Performance Indexes for Fast Aggregations & Analytics Queries
+CREATE INDEX IF NOT EXISTS idx_page_views_created_at ON page_views(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_page_views_session_id ON page_views(session_id);
+CREATE INDEX IF NOT EXISTS idx_page_views_url_path ON page_views(url_path);
+CREATE INDEX IF NOT EXISTS idx_page_views_referrer ON page_views(referrer);
+
+CREATE INDEX IF NOT EXISTS idx_event_logs_created_at ON event_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_event_logs_event_name ON event_logs(event_name);
+CREATE INDEX IF NOT EXISTS idx_event_logs_event_category ON event_logs(event_category);
+CREATE INDEX IF NOT EXISTS idx_event_logs_session_id ON event_logs(session_id);
+CREATE INDEX IF NOT EXISTS idx_event_logs_url_path ON event_logs(url_path);
+

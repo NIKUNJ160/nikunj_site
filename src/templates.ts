@@ -74,7 +74,7 @@ export function layout(title: string, content: string, description: string = "Po
         ${roleHtml}
       </ul>
       <div class="nav-actions">
-        <button id="theme-toggle" class="btn-theme" aria-label="Toggle visual theme">Theme</button>
+        <button id="theme-toggle" class="btn-theme" aria-label="Toggle visual theme" data-track-event="theme_toggle" data-track-category="ui">Theme</button>
         <button id="navToggle" class="nav-toggle-btn" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobileDrawer">
           <span class="hamburger-icon">
             <span class="hamburger-bar"></span>
@@ -103,7 +103,7 @@ export function layout(title: string, content: string, description: string = "Po
       ${drawerRoleHtml}
     </ul>
     <div class="drawer-footer">
-      <button id="drawer-theme-toggle" class="btn-theme drawer-theme-btn" aria-label="Toggle visual theme">Theme</button>
+      <button id="drawer-theme-toggle" class="btn-theme drawer-theme-btn" aria-label="Toggle visual theme" data-track-event="theme_toggle" data-track-category="ui">Theme</button>
     </div>
   </aside>
   
@@ -151,6 +151,7 @@ export function layout(title: string, content: string, description: string = "Po
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="/assets/js/tracker.js" defer></script>
   <script src="/assets/js/main.js"></script>
 </body>
 </html>`;
@@ -186,7 +187,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
   ];
 
   const portfolioHtml = portfolioItems.map(p => `
-    <div class="glass gallery-item ${p.class}" data-scroll>
+    <div class="glass gallery-item ${p.class}" data-scroll data-track-event="project_click" data-track-category="engagement" data-track-label="${p.title}">
       <div class="gallery-image-wrapper">
         <img src="${p.img}" alt="${p.title}" class="gallery-image">
       </div>
@@ -265,7 +266,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
         </h3>
         <div class="hero-actions">
           <a href="#about" class="btn">Learn More</a>
-          <a href="#portfolio" class="btn-outline">View Projects Done</a>
+          <a href="#portfolio" class="btn-outline" data-track-event="project_click" data-track-category="engagement" data-track-label="View Projects Done">View Projects Done</a>
         </div>
       </div>
     </section>
@@ -277,7 +278,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
           <span class="section-tag">INTRODUCTION</span>
           <h2 class="section-heading">About Nikunj Pateliya</h2>
           <p>Hi, I’m Nikunj Pateliya — a freelance web developer, Android creator, and website tester. I build and fine-tune high-performance digital products from the ground up, combining solid code architecture, precise quality testing, and modern UI design.</p>
-          <a href="/assets/Nikunjkumar_Pateliya_CV.pdf" class="btn" style="margin-top: 1.5rem;" target="_blank" download>Download CV</a>
+          <a href="/assets/Nikunjkumar_Pateliya_CV.pdf" class="btn" style="margin-top: 1.5rem;" target="_blank" download data-track-event="cv_download" data-track-category="conversion" data-track-label="cv_pdf">Download CV</a>
         </div>
         <div class="about-col image-col" data-scroll>
           <div class="profile-image-wrapper glass">
@@ -302,10 +303,10 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
         <span class="section-tag">GALLERY</span>
         <h2 class="section-heading">Projects Done</h2>
         <div class="gallery-menu">
-          <button class="active filter-btn" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="gal_a">Web Development</button>
-          <button class="filter-btn" data-filter="gal_b">Creative Design</button>
-          <button class="filter-btn" data-filter="gal_c">Graphic Design</button>
+          <button class="active filter-btn" data-filter="all" data-track-event="portfolio_filter" data-track-category="interaction" data-track-label="all">All</button>
+          <button class="filter-btn" data-filter="gal_a" data-track-event="portfolio_filter" data-track-category="interaction" data-track-label="gal_a">Web Development</button>
+          <button class="filter-btn" data-filter="gal_b" data-track-event="portfolio_filter" data-track-category="interaction" data-track-label="gal_b">Creative Design</button>
+          <button class="filter-btn" data-filter="gal_c" data-track-event="portfolio_filter" data-track-category="interaction" data-track-label="gal_c">Graphic Design</button>
         </div>
       </div>
       <div class="gallery-list">
@@ -341,7 +342,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
         <span class="section-tag">LET'S TALK</span>
         <h2 class="section-heading">Contact Us</h2>
       </div>
-      <form action="/contact" method="POST" class="glass contact-form" data-scroll>
+      <form action="/contact" method="POST" class="glass contact-form" data-scroll data-track-event="contact_form_submit" data-track-category="conversion" data-track-label="contact_form">
         <div class="form-row">
           <input type="text" name="name" placeholder="Your Name" required class="form-input">
           <input type="email" name="email" placeholder="Your Email" required class="form-input">
@@ -365,16 +366,16 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
             <a href="/user/login">Contact</a>
           </div>
           <div class="footer-social">
-            <a href="https://www.instagram.com/_nik__16/" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="Instagram">
+            <a href="https://www.instagram.com/_nik__16/" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="Instagram" data-track-event="social_link_click" data-track-category="outbound" data-track-label="instagram">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
             </a>
-            <a href="https://github.com/NIKUNJ160" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="GitHub">
+            <a href="https://github.com/NIKUNJ160" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="GitHub" data-track-event="social_link_click" data-track-category="outbound" data-track-label="github">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02.005 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.82.58C20.56 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
             </a>
-            <a href="https://www.linkedin.com/in/nikunjpateliya1608" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="LinkedIn">
+            <a href="https://www.linkedin.com/in/nikunjpateliya1608" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="LinkedIn" data-track-event="social_link_click" data-track-category="outbound" data-track-label="linkedin">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM3.56 20.45h3.56V9H3.56v11.45zM22.22 0H1.78C.8 0 0 .78 0 1.74v20.52C0 23.22.8 24 1.78 24h20.44C23.2 24 24 23.22 24 22.26V1.74C24 .78 23.2 0 22.22 0z"/></svg>
             </a>
-            <a href="https://wa.me/919328801435" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="WhatsApp">
+            <a href="https://wa.me/919328801435" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="WhatsApp" data-track-event="social_link_click" data-track-category="outbound" data-track-label="whatsapp">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.79-1.68-2.09-.17-.3-.02-.46.13-.61.14-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.68-1.63-.93-2.23-.24-.58-.49-.5-.68-.51l-.58-.01c-.2 0-.52.07-.79.37-.27.3-1.03 1.01-1.03 2.46s1.05 2.85 1.2 3.05c.15.2 2.07 3.16 5.01 4.43.7.3 1.25.48 1.67.62.7.22 1.34.19 1.84.12.56-.08 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.13-.27-.2-.57-.35zM12 21.7A9.7 9.7 0 0 1 5.14 5.14 9.7 9.7 0 1 1 12 21.7zm0-21.7C5.37 0 0 5.37 0 12c0 2.12.55 4.1 1.52 5.82L0 24l6.35-1.49A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12S18.63 0 12 0z"/></svg>
             </a>
           </div>
@@ -2258,7 +2259,7 @@ export function proposalRequestPage(): string {
       <div class="bento-box">
         <h1 style="margin-bottom:1rem; font-size:clamp(1.5rem, 4vw, 2rem); letter-spacing:-0.03em; overflow-wrap:break-word;">Request a Project</h1>
         <p style="color:var(--text-secondary); margin-bottom:2rem;">Fill out the details below to submit a proposal. We will review it and get back to you shortly.</p>
-        <form action="/api/proposals" method="POST" class="contact-form">
+        <form action="/api/proposals" method="POST" class="contact-form" data-track-event="proposal_request_submit" data-track-category="conversion" data-track-label="proposal_request_form">
           <input type="text" name="title" placeholder="Project Title" required class="form-input">
           <textarea name="content_description" placeholder="Project Description & Content" required class="form-textarea" style="height:100px;"></textarea>
           <input type="number" name="budget" placeholder="Estimated Budget (USD)" class="form-input">
@@ -2363,7 +2364,7 @@ export function proposalDetailsPage(proposal: any, comments: any[], role: 'admin
         <div style="margin-bottom:1.5rem;">
           ${commentsHtml}
         </div>
-        <form action="/api/proposals/${proposal.id}/comments" method="POST" class="contact-form">
+        <form action="/api/proposals/${proposal.id}/comments" method="POST" class="contact-form" data-track-event="proposal_comment_submit" data-track-category="engagement" data-track-label="proposal_comment_${proposal.id}">
           <textarea name="comment" placeholder="Add a comment or ask for changes..." required class="form-textarea" style="height:80px;"></textarea>
           <button type="submit" class="btn">Post Comment</button>
         </form>
