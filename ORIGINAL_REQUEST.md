@@ -1,34 +1,20 @@
 # Original User Request
 
-## 2026-08-16T19:15:45Z
+## Initial Request — 2026-08-30T18:10:23Z
 
-Optimize website UI/UX layouts, font scaling, navigation menus, and grid behaviors across all device sizes (mobile, tablet, desktop) using modern flexbox/grid and container queries, and add a collapsible slide-out navigation drawer.
+Build a first-party, privacy-conscious Edge Analytics & Event Tracking system for nikunjpateliya.site that logs page views and user interaction events directly to Supabase PostgreSQL, paired with an Admin Analytics Dashboard.
 
-Working directory: d:/nikunj-site
-Integrity mode: demo
+Workspace: d:\nikunj-site
 
-## Requirements
+Requirements:
+### R1. First-Party Client Tracking Script & API Ingestion
+Create a lightweight browser tracker script and Hono API endpoint `/api/analytics/track` to ingest page views (URL path, referrer, session ID, user-agent) and custom interaction events (contact form submits, proposal requests, project clicks, theme toggles) asynchronously into Supabase tables (`page_views`, `event_logs`).
 
-### R1. Collapsible Slide-Out Mobile Navigation Drawer
-- Add a functional hamburger menu button to the navbar header for smaller viewports (< 768px).
-- Implement a mobile slide-out navigation drawer displaying the menu items.
-- Ensure the drawer supports transitions and does not clip or overflow on small viewports.
-- The desktop menu must display horizontally as normal on viewports >= 768px.
+### R2. Database Schema & Admin Analytics Dashboard
+Define SQL tables for `page_views` and `event_logs` in `schema.sql`, and build a protected `/admin/analytics` dashboard page in `src/templates.ts` and `src/index.ts` displaying key metrics (total views, unique sessions, top pages, conversion events, and recent activity logs) in a dual-theme glassmorphism layout.
 
-### R2. Layout Responsiveness & CSS Refactor
-- Optimize layouts across all sections (About, Services, Projects Done, Blog, Admin, Client Portal) to be fully responsive.
-- Utilize CSS container queries (`container-type`), flexbox, and grid systems instead of relying solely on fixed margins/paddings or viewport units.
-- Eliminate horizontal scrolling, content overflows, and text clipping on screens down to 320px.
-
-### R3. Preservation of Features
-- Do not break existing theme switching (dark/light themes).
-- Ensure GSAP/ScrollTrigger page animations are fully compatible and trigger correctly on all viewports.
-
-## Acceptance Criteria
-
-### UI & Responsiveness Guardrails
-- [ ] Mobile hamburger toggle button correctly displays/hides the drawer menu using CSS/Vanilla JS.
-- [ ] Navigation drawer slides out smoothly without page jumps or horizontal viewport overflow.
-- [ ] Zero horizontal scrollbars or page overflow on any homepage or admin page down to 320px viewport width.
-- [ ] Text styling and cards reflow gracefully without clipping on mobile, tablet, and desktop viewports.
-- [ ] The build compiles successfully (`npm run typecheck` exit code 0).
+Acceptance Criteria:
+- POST `/api/analytics/track` accepts JSON event payloads and records page views and custom events accurately.
+- Browser tracking script automatically logs initial page load and elements marked with `data-track-event`.
+- `/admin/analytics` is protected by `adminAuthMiddleware` and displays total views, top referral sources, and conversion event summaries.
+- Runs cleanly with `npm run typecheck` passing with zero errors.
