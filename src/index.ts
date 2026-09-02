@@ -154,6 +154,22 @@ app.get('/api/portfolio-data', async (c) => {
   return c.json(data);
 });
 
+app.get('/api/metadata', async (c) => {
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    const { data: meta } = await supabase.from('site_metadata').select('*');
+    const metadata: Record<string, string> = {};
+    if (meta) {
+      meta.forEach((row: any) => {
+        metadata[row.key] = row.value;
+      });
+    }
+    return c.json(metadata);
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
 // Dynamic Sitemap Generation (Cached at Edge for 1 hour)
 app.get('/sitemap.xml', async (c) => {
   let blogs: any[] = [];
@@ -962,26 +978,83 @@ app.post('/admin/client/delete', adminAuthMiddleware, async (c) => {
   }
 });
 
-app.post('/admin/about/update', adminAuthMiddleware, async (c) => {
+app.post('/admin/metadata/update', adminAuthMiddleware, async (c) => {
   const body = await c.req.parseBody();
-  const bio1 = body.about_bio_1 as string;
-  const bio2 = body.about_bio_2 as string;
-  const profileImage = body.about_profile_image as string;
-  const cvUrl = body.about_cv_url as string;
+  
+  const allowedKeys = [
+    'site_name',
+    'public_role',
+    'location',
+    'contact_email',
+    'contact_phone',
+    'meta_description',
+    'about_bio_1',
+    'about_bio_2',
+    'about_profile_image',
+    'about_cv_url',
+    'social_github',
+    'social_linkedin',
+    'social_instagram',
+    'social_whatsapp'
+  ];
 
   try {
     const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
-    const updates = [
-      { key: 'about_bio_1', value: bio1 },
-      { key: 'about_bio_2', value: bio2 },
-      { key: 'about_profile_image', value: profileImage },
-      { key: 'about_cv_url', value: cvUrl }
-    ];
-    for (const update of updates) {
-      const { error } = await supabase.from('site_metadata').upsert(update, { onConflict: 'key' });
+    for (const key of allowedKeys) {
+      if (body[key] !== undefined) {
+        const { error } = await supabase.from('site_metadata').upsert(
+          { key, value: String(body[key]) },
+          { onConflict: 'key' }
+        );
+        if (error) throw new Error(error.message);
+      }
+    }
+    return c.redirect('/admin/menu?success=Website metadata updated successfully.');
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/admin/about/update', adminAuthMiddleware, async (c) => {
+  return c.redirect('/admin/metadata/update', 307);
+});
+
+app.post('/admin/metadata/json-update', adminAuthMiddleware, async (c) => {
+  let config: Record<string, any> = {};
+  
+  try {
+    const contentType = c.req.header('content-type') || '';
+    if (contentType.includes('application/json')) {
+      config = await c.req.json();
+    } else {
+      const body = await c.req.parseBody();
+      const rawJson = body.config_json as string;
+      config = JSON.parse(rawJson);
+    }
+  } catch (err: any) {
+    return c.redirect(`/admin/menu?error=${encodeURIComponent('Invalid JSON format: ' + err.message)}`);
+  }
+
+  try {
+    const supabase = createClient(env<Bindings>(c).SUPABASE_URL, env<Bindings>(c).SUPABASE_ANON_KEY);
+    
+    // Save master 'site_config' row as raw JSON
+    await supabase.from('site_metadata').upsert(
+      { key: 'site_config', value: JSON.stringify(config) },
+      { onConflict: 'key' }
+    );
+
+    // Upsert individual keys into site_metadata for key-value queries
+    for (const [key, value] of Object.entries(config)) {
+      const valString = typeof value === 'object' ? JSON.stringify(value) : String(value);
+      const { error } = await supabase.from('site_metadata').upsert(
+        { key, value: valString },
+        { onConflict: 'key' }
+      );
       if (error) throw new Error(error.message);
     }
-    return c.redirect('/admin/menu?success=About section updated successfully.');
+
+    return c.redirect('/admin/menu?success=Website metadata JSON configuration updated successfully.');
   } catch (err: any) {
     return c.redirect(`/admin/menu?error=${encodeURIComponent(err.message)}`);
   }

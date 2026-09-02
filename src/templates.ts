@@ -157,8 +157,19 @@ export function layout(title: string, content: string, description: string = "Po
 </html>`;
 }
 
-export function homePage(data: { projects: any[]; skills: any[]; services: any[]; blogPosts: any[]; testimonials?: any[] }, role?: 'admin' | 'user'): string {
-  // Built-in SVG Icons for services to keep pages extremely fast (YAGNI/ponytail: zero resource file loading)
+export function homePage(data: { projects: any[]; skills: any[]; services: any[]; blogPosts: any[]; testimonials?: any[]; metadata?: Record<string, string> }, role?: 'admin' | 'user'): string {
+  const meta = data.metadata || {};
+  const siteName = meta.site_name || 'Nikunj Pateliya';
+  const publicRole = meta.public_role || 'Web Designer';
+  const aboutBio1 = meta.about_bio_1 || 'Hi, I’m Nikunj Pateliya — a freelance web developer, Android creator, and website tester. I build and fine-tune high-performance digital products from the ground up, combining solid code architecture, precise quality testing, and modern UI design.';
+  const aboutBio2 = meta.about_bio_2 || '';
+  const profileImage = meta.about_profile_image || '/assets/images/uploads/about.jpeg';
+  const cvUrl = meta.about_cv_url || '/assets/Nikunjkumar_Pateliya_CV.pdf';
+  const instagramUrl = meta.social_instagram || 'https://www.instagram.com/_nik__16/';
+  const githubUrl = meta.social_github || 'https://github.com/NIKUNJ160';
+  const linkedinUrl = meta.social_linkedin || 'https://www.linkedin.com/in/nikunjpateliya1608';
+  const whatsappUrl = meta.social_whatsapp || 'https://wa.me/919328801435';
+
   const icons = {
     web: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
     responsive: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
@@ -260,9 +271,9 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
     <section id="home" class="main-banner" style="background-image: url('/assets/images/uploads/hero-image.jpg');" data-scroll-section>
       <div class="heading">
         <span class="banner-greeting">HELLO, I'M</span>
-        <h1 class="hero-title">Nikunj Pateliya</h1>
+        <h1 class="hero-title">${siteName}</h1>
         <h3 class="cd-headline">
-          <span class="typewriter-text" data-words='["Web Designer", "Full-Stack Developer", "Creative Concept Architect"]'>Web Designer</span>
+          <span class="typewriter-text" data-words='["${publicRole}", "Full-Stack Developer", "Creative Concept Architect"]'>${publicRole}</span>
         </h3>
         <div class="hero-actions">
           <a href="#about" class="btn">Learn More</a>
@@ -276,13 +287,14 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
       <div class="about-row">
         <div class="about-col text-col" data-scroll>
           <span class="section-tag">INTRODUCTION</span>
-          <h2 class="section-heading">About Nikunj Pateliya</h2>
-          <p>Hi, I’m Nikunj Pateliya — a freelance web developer, Android creator, and website tester. I build and fine-tune high-performance digital products from the ground up, combining solid code architecture, precise quality testing, and modern UI design.</p>
-          <a href="/assets/Nikunjkumar_Pateliya_CV.pdf" class="btn" style="margin-top: 1.5rem;" target="_blank" download data-track-event="cv_download" data-track-category="conversion" data-track-label="cv_pdf">Download CV</a>
+          <h2 class="section-heading">About ${siteName}</h2>
+          <p>${aboutBio1}</p>
+          ${aboutBio2 ? `<p style="margin-top: 1rem;">${aboutBio2}</p>` : ''}
+          <a href="${cvUrl}" class="btn" style="margin-top: 1.5rem;" target="_blank" download data-track-event="cv_download" data-track-category="conversion" data-track-label="cv_pdf">Download CV</a>
         </div>
         <div class="about-col image-col" data-scroll>
           <div class="profile-image-wrapper glass">
-            <img src="/assets/images/uploads/about.jpeg" alt="Nikunj Pateliya" class="profile-image">
+            <img src="${profileImage}" alt="${siteName}" class="profile-image">
           </div>
         </div>
       </div>
@@ -366,21 +378,21 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
             <a href="/user/login">Contact</a>
           </div>
           <div class="footer-social">
-            <a href="https://www.instagram.com/_nik__16/" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="Instagram" data-track-event="social_link_click" data-track-category="outbound" data-track-label="instagram">
+            <a href="${instagramUrl}" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="Instagram" data-track-event="social_link_click" data-track-category="outbound" data-track-label="instagram">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
             </a>
-            <a href="https://github.com/NIKUNJ160" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="GitHub" data-track-event="social_link_click" data-track-category="outbound" data-track-label="github">
+            <a href="${githubUrl}" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="GitHub" data-track-event="social_link_click" data-track-category="outbound" data-track-label="github">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02.005 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.82.58C20.56 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
             </a>
-            <a href="https://www.linkedin.com/in/nikunjpateliya1608" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="LinkedIn" data-track-event="social_link_click" data-track-category="outbound" data-track-label="linkedin">
+            <a href="${linkedinUrl}" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="LinkedIn" data-track-event="social_link_click" data-track-category="outbound" data-track-label="linkedin">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM3.56 20.45h3.56V9H3.56v11.45zM22.22 0H1.78C.8 0 0 .78 0 1.74v20.52C0 23.22.8 24 1.78 24h20.44C23.2 24 24 23.22 24 22.26V1.74C24 .78 23.2 0 22.22 0z"/></svg>
             </a>
-            <a href="https://wa.me/919328801435" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="WhatsApp" data-track-event="social_link_click" data-track-category="outbound" data-track-label="whatsapp">
+            <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="WhatsApp" data-track-event="social_link_click" data-track-category="outbound" data-track-label="whatsapp">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.79-1.68-2.09-.17-.3-.02-.46.13-.61.14-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.68-1.63-.93-2.23-.24-.58-.49-.5-.68-.51l-.58-.01c-.2 0-.52.07-.79.37-.27.3-1.03 1.01-1.03 2.46s1.05 2.85 1.2 3.05c.15.2 2.07 3.16 5.01 4.43.7.3 1.25.48 1.67.62.7.22 1.34.19 1.84.12.56-.08 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.13-.27-.2-.57-.35zM12 21.7A9.7 9.7 0 0 1 5.14 5.14 9.7 9.7 0 1 1 12 21.7zm0-21.7C5.37 0 0 5.37 0 12c0 2.12.55 4.1 1.52 5.82L0 24l6.35-1.49A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12S18.63 0 12 0z"/></svg>
             </a>
           </div>
         </div>
-        <p class="footer-copyright">&copy; 2024 Nikunj Pateliya. All Rights Reserved.</p>
+        <p class="footer-copyright">&copy; 2026 ${siteName}. All Rights Reserved.</p>
       </div>
     </footer>
   `;
@@ -1178,28 +1190,114 @@ export function adminMenuPage(
             
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
               
-              <!-- About Bio & Site Config -->
-              <div class="glass" style="padding:20px; border-radius:16px;">
-                <h3 class="admin-section-title" style="margin-bottom:14px;">Website Bio &amp; Metadata Config</h3>
-                <form action="/admin/about/update" method="POST" style="display:flex; flex-direction:column; gap:12px;">
-                  <div class="admin-form-group">
-                    <label>Intro Bio Paragraph 1</label>
-                    <textarea name="about_bio_1" class="form-textarea" style="height:70px;" required>${metadata.about_bio_1 || ''}</textarea>
+              <!-- Website Bio & Metadata Config (Form + JSON Editor) -->
+              <div class="glass" style="padding:24px; border-radius:16px; margin-bottom:20px; grid-column: 1 / -1;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:18px; border-bottom:1px solid var(--border-glass); padding-bottom:14px;">
+                  <div>
+                    <h3 class="admin-section-title" style="margin:0;">Website Bio &amp; Metadata Config</h3>
+                    <p style="margin:4px 0 0 0; font-size:0.85rem; color:var(--text-secondary);">
+                      Manage site profile details, bio paragraphs, social media links, and raw JSON database config in real-time.
+                    </p>
                   </div>
-                  <div class="admin-form-group">
-                    <label>Detail Bio Paragraph 2</label>
-                    <textarea name="about_bio_2" class="form-textarea" style="height:70px;" required>${metadata.about_bio_2 || ''}</textarea>
+                  <div style="display:flex; gap:8px;">
+                    <button id="btn-mode-form" type="button" class="btn" style="font-size:0.8rem; padding:6px 14px;" onclick="switchMetadataMode('form')">Form Editor</button>
+                    <button id="btn-mode-json" type="button" class="btn-outline" style="font-size:0.8rem; padding:6px 14px;" onclick="switchMetadataMode('json')">JSON Database Config</button>
                   </div>
-                  <div class="admin-form-group">
-                    <label>Profile Image File Path</label>
-                    <input type="text" name="about_profile_image" value="${metadata.about_profile_image || ''}" required class="form-input">
-                  </div>
-                  <div class="admin-form-group">
-                    <label>Download CV File Path</label>
-                    <input type="text" name="about_cv_url" value="${metadata.about_cv_url || ''}" required class="form-input">
-                  </div>
-                  <button type="submit" class="btn" style="margin-top:4px;">Save Bio Changes</button>
-                </form>
+                </div>
+
+                <!-- Form Mode -->
+                <div id="metadata-mode-form">
+                  <form action="/admin/metadata/update" method="POST" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+                    <div class="admin-form-group">
+                      <label>Site / Public Name</label>
+                      <input type="text" name="site_name" value="${metadata.site_name || 'Nikunj Pateliya'}" required class="form-input">
+                    </div>
+                    <div class="admin-form-group">
+                      <label>Public Role / Tagline</label>
+                      <input type="text" name="public_role" value="${metadata.public_role || 'Web Designer & Full-Stack Developer'}" required class="form-input">
+                    </div>
+                    <div class="admin-form-group">
+                      <label>Location</label>
+                      <input type="text" name="location" value="${metadata.location || 'Gujarat, India'}" class="form-input">
+                    </div>
+                    <div class="admin-form-group">
+                      <label>Contact Email</label>
+                      <input type="email" name="contact_email" value="${metadata.contact_email || 'hello@nikunjpateliya.site'}" class="form-input">
+                    </div>
+                    <div class="admin-form-group">
+                      <label>Contact Phone / WhatsApp</label>
+                      <input type="text" name="contact_phone" value="${metadata.contact_phone || '+91 93288 01435'}" class="form-input">
+                    </div>
+                    <div class="admin-form-group" style="grid-column: 1 / -1;">
+                      <label>Meta Description (SEO)</label>
+                      <textarea name="meta_description" class="form-textarea" style="height:60px;">${metadata.meta_description || 'Portfolio of Nikunj Pateliya, showcasing web design and full-stack development work.'}</textarea>
+                    </div>
+                    <div class="admin-form-group" style="grid-column: 1 / -1;">
+                      <label>Intro Bio Paragraph 1</label>
+                      <textarea name="about_bio_1" class="form-textarea" style="height:75px;" required>${metadata.about_bio_1 || 'Hi, I’m Nikunj Pateliya — a freelance web developer, Android creator, and website tester. I build and fine-tune high-performance digital products from the ground up, combining solid code architecture, precise quality testing, and modern UI design.'}</textarea>
+                    </div>
+                    <div class="admin-form-group" style="grid-column: 1 / -1;">
+                      <label>Detail Bio Paragraph 2</label>
+                      <textarea name="about_bio_2" class="form-textarea" style="height:75px;">${metadata.about_bio_2 || ''}</textarea>
+                    </div>
+                    <div class="admin-form-group">
+                      <label>Profile Image URL / Path</label>
+                      <input type="text" name="about_profile_image" value="${metadata.about_profile_image || '/assets/images/uploads/nik.jpeg'}" required class="form-input">
+                    </div>
+                    <div class="admin-form-group">
+                      <label>CV Download URL / Path</label>
+                      <input type="text" name="about_cv_url" value="${metadata.about_cv_url || '/assets/Nikunjkumar_Pateliya_CV.pdf'}" required class="form-input">
+                    </div>
+                    <div class="admin-form-group">
+                      <label>GitHub Profile URL</label>
+                      <input type="url" name="social_github" value="${metadata.social_github || 'https://github.com/NIKUNJ160'}" class="form-input">
+                    </div>
+                    <div class="admin-form-group">
+                      <label>LinkedIn Profile URL</label>
+                      <input type="url" name="social_linkedin" value="${metadata.social_linkedin || 'https://www.linkedin.com/in/nikunjpateliya1608'}" class="form-input">
+                    </div>
+                    <div class="admin-form-group">
+                      <label>Instagram Profile URL</label>
+                      <input type="url" name="social_instagram" value="${metadata.social_instagram || 'https://www.instagram.com/_nik__16/'}" class="form-input">
+                    </div>
+                    <div class="admin-form-group">
+                      <label>WhatsApp Contact URL</label>
+                      <input type="url" name="social_whatsapp" value="${metadata.social_whatsapp || 'https://wa.me/919328801435'}" class="form-input">
+                    </div>
+                    <div style="grid-column: 1 / -1; margin-top:8px;">
+                      <button type="submit" class="btn">Save Form Config</button>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- JSON Mode -->
+                <div id="metadata-mode-json" style="display:none;">
+                  <form action="/admin/metadata/json-update" method="POST" onsubmit="return validateJsonSubmit()">
+                    <div style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                      <span style="font-size:0.85rem; color:var(--text-secondary);">Direct JSON Database Config Editor (Real-Time Upsert):</span>
+                      <button type="button" class="btn-outline" style="font-size:0.75rem; padding:3px 10px;" onclick="formatJsonTextarea()">Format JSON</button>
+                    </div>
+                    <textarea id="json-config-textarea" name="config_json" class="form-textarea" style="height:320px; font-family:monospace; font-size:0.85rem; line-height:1.4; white-space:pre; tab-size:2;" required>${JSON.stringify({
+                      site_name: metadata.site_name || 'Nikunj Pateliya',
+                      public_role: metadata.public_role || 'Web Designer & Full-Stack Developer',
+                      location: metadata.location || 'Gujarat, India',
+                      contact_email: metadata.contact_email || 'hello@nikunjpateliya.site',
+                      contact_phone: metadata.contact_phone || '+91 93288 01435',
+                      meta_description: metadata.meta_description || 'Portfolio of Nikunj Pateliya, showcasing web design and full-stack development work.',
+                      about_bio_1: metadata.about_bio_1 || 'Hi, I’m Nikunj Pateliya — a freelance web developer, Android creator, and website tester. I build and fine-tune high-performance digital products from the ground up, combining solid code architecture, precise quality testing, and modern UI design.',
+                      about_bio_2: metadata.about_bio_2 || '',
+                      about_profile_image: metadata.about_profile_image || '/assets/images/uploads/nik.jpeg',
+                      about_cv_url: metadata.about_cv_url || '/assets/Nikunjkumar_Pateliya_CV.pdf',
+                      social_github: metadata.social_github || 'https://github.com/NIKUNJ160',
+                      social_linkedin: metadata.social_linkedin || 'https://www.linkedin.com/in/nikunjpateliya1608',
+                      social_instagram: metadata.social_instagram || 'https://www.instagram.com/_nik__16/',
+                      social_whatsapp: metadata.social_whatsapp || 'https://wa.me/919328801435'
+                    }, null, 2)}</textarea>
+                    <div style="margin-top:12px; display:flex; gap:10px;">
+                      <button type="submit" class="btn">Apply &amp; Save JSON Config</button>
+                    </div>
+                  </form>
+                </div>
               </div>
 
               <!-- Registered Users Table -->
@@ -1451,6 +1549,47 @@ export function adminMenuPage(
         document.querySelectorAll('.admin-tab-pane').forEach(pane => {
           pane.classList.toggle('active', pane.id === tabId);
         });
+      }
+
+      function switchMetadataMode(mode) {
+        const formDiv = document.getElementById('metadata-mode-form');
+        const jsonDiv = document.getElementById('metadata-mode-json');
+        const btnForm = document.getElementById('btn-mode-form');
+        const btnJson = document.getElementById('btn-mode-json');
+        if (mode === 'json') {
+          if (formDiv) formDiv.style.display = 'none';
+          if (jsonDiv) jsonDiv.style.display = 'block';
+          if (btnForm) btnForm.className = 'btn-outline';
+          if (btnJson) btnJson.className = 'btn';
+        } else {
+          if (formDiv) formDiv.style.display = 'block';
+          if (jsonDiv) jsonDiv.style.display = 'none';
+          if (btnForm) btnForm.className = 'btn';
+          if (btnJson) btnJson.className = 'btn-outline';
+        }
+      }
+
+      function formatJsonTextarea() {
+        const textarea = document.getElementById('json-config-textarea');
+        if (!textarea) return;
+        try {
+          const parsed = JSON.parse(textarea.value);
+          textarea.value = JSON.stringify(parsed, null, 2);
+        } catch (e) {
+          alert('Invalid JSON syntax: ' + e.message);
+        }
+      }
+
+      function validateJsonSubmit() {
+        const textarea = document.getElementById('json-config-textarea');
+        if (!textarea) return false;
+        try {
+          JSON.parse(textarea.value);
+          return true;
+        } catch (e) {
+          alert('Cannot submit. JSON syntax error: ' + e.message);
+          return false;
+        }
       }
 
       document.addEventListener('DOMContentLoaded', () => {
