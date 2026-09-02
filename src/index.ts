@@ -98,22 +98,20 @@ async function fetchPortfolioData(supabase: SupabaseClient) {
       });
     }
 
-    let services = [];
-    if (dbServices && dbServices.length > 0) {
-      services = dbServices.map((s: any) => ({
-        title: s.title,
-        desc: s.description,
-        icon: s.icon
-      }));
-    } else {
-      services = [
-        { title: 'Web Design', desc: 'Clean, dual-theme layouts using modern glassmorphic principles.', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z"></path></svg>' },
-        { title: 'Full-Stack Development', desc: 'Edge-rendered Cloudflare Workers apps running with serverless databases.', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>' },
-        { title: 'SEO & Strategy', desc: 'Optimized page speeds, semantic tags, and dynamic sitemaps.', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>' }
-      ];
-    }
+    const services = (dbServices || []).map((s: any) => ({
+      title: s.title,
+      desc: s.description,
+      icon: s.icon
+    }));
 
-    return { projects: projects || [], skills, services, blogPosts: blogPosts || [], metadata, testimonials: dbTestimonials || [] };
+    const testimonials = (dbTestimonials || []).map((t: any) => ({
+      name: t.name,
+      role: t.role,
+      text: t.text,
+      img: t.img || '/assets/images/uploads/testi_01.png'
+    }));
+
+    return { projects: projects || [], skills, services, blogPosts: blogPosts || [], metadata, testimonials };
   } catch {
     return { projects: [], skills: [], services: [], blogPosts: [], metadata: {}, testimonials: [] };
   }

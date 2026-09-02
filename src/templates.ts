@@ -179,70 +179,53 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
     design: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z"></path></svg>`
   };
 
-  const services = [
-    { title: 'Web Development', desc: 'Crafting responsive, high-performance web applications using modern, compile-free server technologies.', icon: icons.web },
-    { title: 'Responsive Design', desc: 'Ensuring your site behaves perfectly across all viewports, from compact devices to ultrawide displays.', icon: icons.responsive },
-    { title: 'Creative Layouts', desc: 'Bespoke design concepts featuring modular bento structures and custom visual typography.', icon: icons.creative },
-    { title: 'Edge Analytics', desc: 'Implementing fast, serverless endpoints optimized for minimal load times and zero framework overhead.', icon: icons.support },
-    { title: 'SEO & Dynamic Sitemaps', desc: 'Deploying structured meta schemas and automatic XML sitemaps to optimize search engine crawling.', icon: icons.idea },
-    { title: 'UI/UX Strategy', desc: 'Developing intuitive navigational frameworks, hover transitions, and accessible visual flows.', icon: icons.design }
-  ];
-
-  const portfolioItems = [
-    { title: 'Corporate Portal', cat: 'Web Development', class: 'gal_a', img: '/assets/images/uploads/gallery_img-01.jpg' },
-    { title: 'Creative Layout', cat: 'Creative Design', class: 'gal_b', img: '/assets/images/uploads/gallery_img-02.jpg' },
-    { title: 'Brand Identity', cat: 'Graphic Design', class: 'gal_c', img: '/assets/images/uploads/gallery_img-03.jpg' },
-    { title: 'SaaS Dashboard', cat: 'Web Development', class: 'gal_a', img: '/assets/images/uploads/gallery_img-04.jpg' },
-    { title: 'E-commerce App', cat: 'Web Development', class: 'gal_a', img: '/assets/images/uploads/gallery_img-05.jpg' },
-    { title: 'Digital Agency', cat: 'Creative Design', class: 'gal_b', img: '/assets/images/uploads/gallery_img-06.jpg' }
-  ];
-
-  const portfolioHtml = portfolioItems.map(p => `
-    <div class="glass gallery-item ${p.class}" data-scroll data-track-event="project_click" data-track-category="engagement" data-track-label="${p.title}">
-      <div class="gallery-image-wrapper">
-        <img src="${p.img}" alt="${p.title}" class="gallery-image">
+  const servicesList = (data.services && data.services.length > 0) ? data.services : [];
+  const servicesHtml = servicesList.length > 0
+    ? servicesList.map((s: any) => `
+      <div class="glass service-card" data-scroll>
+        <div class="service-icon-box">
+          ${s.icon || icons.web}
+        </div>
+        <h3>${s.title}</h3>
+        <p>${s.desc || s.description || ''}</p>
       </div>
-      <div class="gallery-info">
-        <h4>${p.title}</h4>
-        <span class="gallery-category">${p.cat}</span>
-      </div>
-    </div>
-  `).join('');
+    `).join('')
+    : `<p class="text-secondary" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">No services listed yet.</p>`;
 
-  const servicesHtml = services.map(s => `
-    <div class="glass service-card" data-scroll>
-      <div class="service-icon-box">
-        ${s.icon}
-      </div>
-      <h3>${s.title}</h3>
-      <p>${s.desc}</p>
-    </div>
-  `).join('');
-
-  const testimonials = (data.testimonials && data.testimonials.length > 0)
-    ? data.testimonials
-    : [
-      { name: 'James Fernando', role: 'Manager of Racer', text: 'Wonderful Support! They delivered our project on time with an incredibly skilled, professional team.', img: '/assets/images/uploads/testi_01.png' },
-      { name: 'Jacques Philips', role: 'Designer', text: 'Awesome Services! Their attention to page speed and custom styling exceeds standard templates.', img: '/assets/images/uploads/testi_02.png' },
-      { name: 'Venanda Mercy', role: 'New York City', text: 'Great & Talented Team! Clean layouts, high performance, and smooth animations. Highly recommended.', img: '/assets/images/uploads/testi_03.png' }
-    ];
-
-  const testimonialsHtml = testimonials.map(t => `
-    <div class="glass testimonial-card" data-scroll>
-      <div class="testimonial-header">
-        <img src="${t.img}" alt="${t.name}" class="testimonial-avatar">
-        <div class="testimonial-meta">
-          <h4>${t.name}</h4>
-          <span class="text-muted">${t.role}</span>
+  const portfolioList = (data.projects && data.projects.length > 0) ? data.projects : [];
+  const portfolioHtml = portfolioList.length > 0
+    ? portfolioList.map((p: any) => `
+      <div class="glass gallery-item ${p.class_name || p.class || 'gal_a'}" data-scroll data-track-event="project_click" data-track-category="engagement" data-track-label="${p.title}">
+        <div class="gallery-image-wrapper">
+          <img src="${p.image_url || p.img || '/assets/images/uploads/gallery_img-01.jpg'}" alt="${p.title}" class="gallery-image">
+        </div>
+        <div class="gallery-info">
+          <h4>${p.title}</h4>
+          <span class="gallery-category">${p.category || p.cat || 'Portfolio'}</span>
         </div>
       </div>
-      <p class="testimonial-text">"${t.text}"</p>
-    </div>
-  `).join('');
+    `).join('')
+    : `<p class="text-secondary" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">No portfolio projects added yet.</p>`;
 
-  const latestBlogPosts = data.blogPosts.slice(0, 3);
-  const blogHtml = latestBlogPosts.length
-    ? latestBlogPosts.map(p => `
+  const testimonialsList = (data.testimonials && data.testimonials.length > 0) ? data.testimonials : [];
+  const testimonialsHtml = testimonialsList.length > 0
+    ? testimonialsList.map((t: any) => `
+      <div class="glass testimonial-card" data-scroll>
+        <div class="testimonial-header">
+          <img src="${t.img || '/assets/images/uploads/testi_01.png'}" alt="${t.name}" class="testimonial-avatar">
+          <div class="testimonial-meta">
+            <h4>${t.name}</h4>
+            <span class="text-muted">${t.role}</span>
+          </div>
+        </div>
+        <p class="testimonial-text">"${t.text}"</p>
+      </div>
+    `).join('')
+    : `<p class="text-secondary" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">No testimonials published yet.</p>`;
+
+  const latestBlogPosts = (data.blogPosts || []).slice(0, 3);
+  const blogHtml = latestBlogPosts.length > 0
+    ? latestBlogPosts.map((p: any) => `
       <article class="glass blog-card" data-scroll>
         <div class="blog-card-meta">
           <span class="blog-card-date">${new Date(p.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
@@ -252,20 +235,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
         <a href="/blog/${p.slug}" class="blog-read-more">Read More &rarr;</a>
       </article>
     `).join('')
-    : `
-      <article class="glass blog-card" data-scroll>
-        <div class="blog-card-meta"><span class="blog-card-date">Aug 12, 2026</span></div>
-        <h3><a href="/blog">Custom SEO Architectures</a></h3>
-        <p class="text-secondary">Deploying dynamic sitemaps at the edge with zero static building steps.</p>
-        <a href="/blog" class="blog-read-more">Read More &rarr;</a>
-      </article>
-      <article class="glass blog-card" data-scroll>
-        <div class="blog-card-meta"><span class="blog-card-date">Aug 10, 2026</span></div>
-        <h3><a href="/blog">Optimizing Web Core Vitals</a></h3>
-        <p class="text-secondary">Bypassing heavy client libraries and optimizing images to achieve high lighthouse scores.</p>
-        <a href="/blog" class="blog-read-more">Read More &rarr;</a>
-      </article>
-    `;
+    : `<p class="text-secondary" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">No blog articles published yet.</p>`;
 
   const content = `
     <section id="home" class="main-banner" style="background-image: url('/assets/images/uploads/hero-image.jpg');" data-scroll-section>

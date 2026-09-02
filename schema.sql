@@ -204,3 +204,34 @@ CREATE INDEX IF NOT EXISTS idx_event_logs_event_category ON event_logs(event_cat
 CREATE INDEX IF NOT EXISTS idx_event_logs_session_id ON event_logs(session_id);
 CREATE INDEX IF NOT EXISTS idx_event_logs_url_path ON event_logs(url_path);
 
+-- Seed Initial Portfolio Data (Only inserted on first database setup)
+INSERT INTO services (title, description, icon) VALUES
+('Web Development', 'Crafting responsive, high-performance web applications using modern, compile-free server technologies.', '<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>'),
+('Responsive Design', 'Ensuring your site behaves perfectly across all viewports, from compact devices to ultrawide displays.', '<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>'),
+('Creative Layouts', 'Bespoke design concepts featuring modular bento structures and custom visual typography.', '<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 8 4.5l-2.5 2.5a6 6 0 1 0-11 0L4 6.5A10 10 0 0 1 12 2z"></path><circle cx="12" cy="12" r="3"></circle></svg>'),
+('Edge Analytics', 'Implementing fast, serverless endpoints optimized for minimal load times and zero framework overhead.', '<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO testimonials (name, role, text, img) VALUES
+('James Fernando', 'Manager of Racer', 'Wonderful Support! They delivered our project on time with an incredibly skilled, professional team.', '/assets/images/uploads/testi_01.png'),
+('Jacques Philips', 'Designer', 'Awesome Services! Their attention to page speed and custom styling exceeds standard templates.', '/assets/images/uploads/testi_02.png'),
+('Venanda Mercy', 'New York City', 'Great & Talented Team! Clean layouts, high performance, and smooth animations. Highly recommended.', '/assets/images/uploads/testi_03.png')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO site_metadata (key, value) VALUES
+('site_name', 'Nikunj Pateliya'),
+('public_role', 'Web Designer & Full-Stack Developer'),
+('location', 'Gujarat, India'),
+('contact_email', 'hello@nikunjpateliya.site'),
+('contact_phone', '+91 93288 01435'),
+('meta_description', 'Portfolio of Nikunj Pateliya, showcasing web design and full-stack development work.'),
+('about_bio_1', 'Hi, I’m Nikunj Pateliya — a freelance web developer, Android creator, and website tester. I build and fine-tune high-performance digital products from the ground up, combining solid code architecture, precise quality testing, and modern UI design.'),
+('about_bio_2', ''),
+('about_profile_image', '/assets/images/uploads/nik.jpeg'),
+('about_cv_url', '/assets/Nikunjkumar_Pateliya_CV.pdf'),
+('social_github', 'https://github.com/NIKUNJ160'),
+('social_linkedin', 'https://www.linkedin.com/in/nikunjpateliya1608'),
+('social_instagram', 'https://www.instagram.com/_nik__16/'),
+('social_whatsapp', 'https://wa.me/919328801435')
+ON CONFLICT (key) DO NOTHING;
+
