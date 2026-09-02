@@ -163,6 +163,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
   const publicRole = meta.public_role || 'Web Designer';
   const aboutBio1 = meta.about_bio_1 || 'Hi, I’m Nikunj Pateliya — a freelance web developer, Android creator, and website tester. I build and fine-tune high-performance digital products from the ground up, combining solid code architecture, precise quality testing, and modern UI design.';
   const aboutBio2 = meta.about_bio_2 || '';
+  const heroImage = meta.hero_image_url || '/assets/images/uploads/hero-image.jpg';
   const profileImage = meta.about_profile_image || '/assets/images/uploads/about.jpeg';
   const cvUrl = meta.about_cv_url || '/assets/Nikunjkumar_Pateliya_CV.pdf';
   const instagramUrl = meta.social_instagram || 'https://www.instagram.com/_nik__16/';
@@ -238,7 +239,7 @@ export function homePage(data: { projects: any[]; skills: any[]; services: any[]
     : `<p class="text-secondary" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">No blog articles published yet.</p>`;
 
   const content = `
-    <section id="home" class="main-banner" style="background-image: url('/assets/images/uploads/hero-image.jpg');" data-scroll-section>
+    <section id="home" class="main-banner" style="background-image: url('${heroImage}');" data-scroll-section>
       <div class="heading">
         <span class="banner-greeting">HELLO, I'M</span>
         <h1 class="hero-title">${siteName}</h1>
@@ -1211,8 +1212,18 @@ export function adminMenuPage(
                       <textarea name="about_bio_2" class="form-textarea" style="height:75px;">${metadata.about_bio_2 || ''}</textarea>
                     </div>
                     <div class="admin-form-group">
-                      <label>Profile Image URL / Path</label>
-                      <input type="text" name="about_profile_image" value="${metadata.about_profile_image || '/assets/images/uploads/nik.jpeg'}" required class="form-input">
+                      <label>Hero Banner Image Link / URL</label>
+                      <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="text" id="input-hero-image" name="hero_image_url" value="${metadata.hero_image_url || '/assets/images/uploads/hero-image.jpg'}" placeholder="https://... or /assets/images/..." required class="form-input" oninput="previewImage('input-hero-image', 'preview-hero-image')">
+                        <img id="preview-hero-image" src="${metadata.hero_image_url || '/assets/images/uploads/hero-image.jpg'}" alt="Hero Banner Preview" style="width:54px; height:36px; object-fit:cover; border-radius:6px; border:1px solid var(--border-glass);" onerror="this.src='/assets/images/uploads/hero-image.jpg'">
+                      </div>
+                    </div>
+                    <div class="admin-form-group">
+                      <label>Profile Image Link / URL</label>
+                      <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="text" id="input-profile-image" name="about_profile_image" value="${metadata.about_profile_image || '/assets/images/uploads/nik.jpeg'}" placeholder="https://... or /assets/images/..." required class="form-input" oninput="previewImage('input-profile-image', 'preview-profile-image')">
+                        <img id="preview-profile-image" src="${metadata.about_profile_image || '/assets/images/uploads/nik.jpeg'}" alt="Profile Preview" style="width:36px; height:36px; object-fit:cover; border-radius:50%; border:1px solid var(--border-glass);" onerror="this.src='/assets/images/uploads/nik.jpeg'">
+                      </div>
                     </div>
                     <div class="admin-form-group">
                       <label>CV Download URL / Path</label>
@@ -1256,6 +1267,7 @@ export function adminMenuPage(
                       meta_description: metadata.meta_description || 'Portfolio of Nikunj Pateliya, showcasing web design and full-stack development work.',
                       about_bio_1: metadata.about_bio_1 || 'Hi, I’m Nikunj Pateliya — a freelance web developer, Android creator, and website tester. I build and fine-tune high-performance digital products from the ground up, combining solid code architecture, precise quality testing, and modern UI design.',
                       about_bio_2: metadata.about_bio_2 || '',
+                      hero_image_url: metadata.hero_image_url || '/assets/images/uploads/hero-image.jpg',
                       about_profile_image: metadata.about_profile_image || '/assets/images/uploads/nik.jpeg',
                       about_cv_url: metadata.about_cv_url || '/assets/Nikunjkumar_Pateliya_CV.pdf',
                       social_github: metadata.social_github || 'https://github.com/NIKUNJ160',

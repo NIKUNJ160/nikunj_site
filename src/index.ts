@@ -988,6 +988,7 @@ app.post('/admin/metadata/update', adminAuthMiddleware, async (c) => {
     'meta_description',
     'about_bio_1',
     'about_bio_2',
+    'hero_image_url',
     'about_profile_image',
     'about_cv_url',
     'social_github',
