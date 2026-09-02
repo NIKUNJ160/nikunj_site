@@ -70,8 +70,8 @@ app.use('*', async (c, next) => {
   await next();
 });
 
-// Rate limiter middleware for sensitive auth routes (max 5 requests per 15 mins per IP)
-const authRateLimiter = rateLimiter({ maxRequests: 5, windowMs: 15 * 60 * 1000 });
+// Rate limiter middleware for sensitive auth routes (max 15 requests per 30 seconds per IP)
+const authRateLimiter = rateLimiter({ maxRequests: 15, windowMs: 30 * 1000 });
 app.use('/user/login', authRateLimiter);
 app.use('/user/register', authRateLimiter);
 app.use('/admin/login', authRateLimiter);
